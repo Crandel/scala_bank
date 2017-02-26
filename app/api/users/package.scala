@@ -8,9 +8,9 @@ import play.api.i18n.Messages
 package object post {
 
   /**
-    * Converts between PostRequest and Messages automatically.
+    * Converts between UsersRequest and Messages automatically.
     */
-  implicit def requestToMessages[A](implicit r: PostRequest[A]): Messages = {
+  implicit def requestToMessages[A](implicit r: UsersRequest[A]): Messages = {
     r.messages
   }
 }
