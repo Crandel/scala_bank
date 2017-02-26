@@ -1,4 +1,4 @@
-package v1
+package api
 
 import play.api.i18n.Messages
 

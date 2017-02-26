@@ -1,4 +1,4 @@
-package v1.post
+package api.users
 
 import javax.inject.Inject
 
@@ -7,12 +7,12 @@ import play.api.routing.SimpleRouter
 import play.api.routing.sird._
 
 /**
-  * Routes and URLs to the PostResource controller.
+  * Routes and URLs to the UsersResource controller.
   */
-class PostRouter @Inject()(controller: PostController) extends SimpleRouter {
-  val prefix = "/v1/posts"
+class UsersRouter @Inject()(controller: UserController) extends SimpleRouter {
+  val prefix = "/api/users"
 
-  def link(id: PostId): String = {
+  def link(id: UserId): String = {
     import com.netaporter.uri.dsl._
     val url = prefix / id.toString
     url.toString()

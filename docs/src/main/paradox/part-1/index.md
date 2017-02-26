@@ -20,10 +20,10 @@ We'll start off with a REST API that displays information for blog posts.  Users
 
 The way to do this in REST is to model the represented state as a resource.  A blog post resource will have a unique id, a URL hyperlink that indicates the canonical location of the resource, the title of the blog post, and the body of the blog post.
 
-This resource is represented as a single case class in the Play application [here](https://github.com/playframework/play-rest-api/blob/master/app/v1/post/PostResourceHandler.scala#L13):
+This resource is represented as a single case class in the Play application [here](https://github.com/playframework/play-rest-api/blob/master/app/v1/post/UsersResourceHandler.scala#L13):
 
 ```scala
-case class PostResource(id: String, link: String,
+case class UsersResource(id: String, link: String,
                         title: String, body: String)
 ```
 
@@ -41,16 +41,16 @@ GET    /               controllers.HomeController.index()
 
 This is useful for situations where a front end service is rendering HTML.  However, Play also contains a more powerful routing DSL that we will use for the REST API.
 
-For every HTTP request starting with `/v1/posts`, Play routes it to a dedicated `PostRouter` class to handle the Posts resource, through the [`conf/routes`](https://github.com/playframework/play-rest-api/blob/master/conf/routes) file:
+For every HTTP request starting with `/api/users`, Play routes it to a dedicated `UsersRouter` class to handle the Posts resource, through the [`conf/routes`](https://github.com/playframework/play-rest-api/blob/master/conf/routes) file:
 
 ```
-->     /v1/posts               v1.post.PostRouter
+->     /api/users               api.users.UsersRouter
 ```
 
-The `PostRouter` examines the URL and extracts data to pass along to the controller [here](https://github.com/playframework/play-rest-api/blob/master/app/v1/post/PostRouter.scala):
+The `UsersRouter` examines the URL and extracts data to pass along to the controller [here](https://github.com/playframework/play-rest-api/blob/master/app/v1/post/UsersRouter.scala):
 
 ```scala
-package v1.post
+package api.users
 import javax.inject.Inject
 
 import play.api.mvc._
@@ -58,7 +58,7 @@ import play.api.routing.Router.Routes
 import play.api.routing.SimpleRouter
 import play.api.routing.sird._
 
-class PostRouter @Inject()(controller: PostController)
+class UsersRouter @Inject()(controller: UserController)
   extends SimpleRouter
 {
   override def routes: Routes = {
@@ -90,14 +90,14 @@ SIRD is especially useful in a REST API where there can be many possible query p
 
 ## Using a Controller
 
-The PostRouter has a PostController injected into it through standard [JSR-330 dependency injection](https://github.com/google/guice/wiki/JSR330) [here](https://github.com/playframework/play-rest-api/blob/master/app/v1/post/PostRouter.scala#L12):
+The UsersRouter has a UserController injected into it through standard [JSR-330 dependency injection](https://github.com/google/guice/wiki/JSR330) [here](https://github.com/playframework/play-rest-api/blob/master/app/v1/post/UsersRouter.scala#L12):
 
 ```scala
-class PostRouter @Inject()(controller: PostController)
+class UsersRouter @Inject()(controller: UserController)
   extends SimpleRouter
 ```
 
-Before heading into the PostController, let's discuss how controllers work in Play.
+Before heading into the UserController, let's discuss how controllers work in Play.
 
 A controller [handles the work of processing](https://www.playframework.com/documentation/2.5.x/ScalaActions)  the HTTP request into an HTTP response in the context of an Action: it's where page rendering and HTML form processing happen.  A controller extends [`play.api.mvc.Controller`](https://playframework.com/documentation/2.5.x/api/scala/index.html#play.api.mvc.Controller), which contains a number of utility methods and constants for working with HTTP.  In particular, a Controller contains Result objects such as Ok and Redirect, and HeaderNames like ACCEPT.
 
@@ -138,11 +138,11 @@ In this example, `index1` and `asyncIndex` have exactly the same behavior.  Inte
 
 However, if you're already working with `Future`, async makes it easier to pass that `Future` around. You can read more about this in the [handling asynchronous results](https://www.playframework.com/documentation/2.5.x/ScalaAsync) section of the Play documentation.
 
-The PostController methods dealing with GET requests is [here](https://github.com/playframework/play-rest-api/blob/master/app/v1/post/PostController.scala):
+The UserController methods dealing with GET requests is [here](https://github.com/playframework/play-rest-api/blob/master/app/v1/post/UserController.scala):
 
 ```scala
-class PostController @Inject()(action: PostAction,
-                              handler: PostResourceHandler)
+class UserController @Inject()(action: UserAction,
+                              handler: UsersResourceHandler)
                              (implicit ec: ExecutionContext)
  extends Controller {
 
@@ -165,7 +165,7 @@ class PostController @Inject()(action: PostAction,
 }
 ```
 
-Let's take `show` as an example.  Here, the action defines a workflow for a request that maps to a single resource, i.e. `GET /v1/posts/123`.  
+Let's take `show` as an example.  Here, the action defines a workflow for a request that maps to a single resource, i.e. `GET /api/users/123`.  
 
 ```scala
 def show(id: String): Action[AnyContent] = {
@@ -177,26 +177,26 @@ def show(id: String): Action[AnyContent] = {
 }
 ```
 
-The id is passed in as a String, and the handler looks up and returns a `PostResource`.  The `Ok()` sends back a `Result` with a status code of "200 OK", containing a response body consisting of the `PostResource` serialized as JSON.
+The id is passed in as a String, and the handler looks up and returns a `UsersResource`.  The `Ok()` sends back a `Result` with a status code of "200 OK", containing a response body consisting of the `UsersResource` serialized as JSON.
 
 ### Processing Form Input
 
 Handling a POST request is also easy and is done through the `process` method:
 
 ```scala
-class PostController @Inject()(action: PostAction,
-                              handler: PostResourceHandler)
+class UserController @Inject()(action: UserAction,
+                              handler: UsersResourceHandler)
                              (implicit ec: ExecutionContext)
   extends Controller {
 
-  private val form: Form[PostFormInput] = {
+  private val form: Form[UserFormInput] = {
     import play.api.data.Forms._
 
     Form(
       mapping(
         "title" -> nonEmptyText,
         "body" -> text
-      )(PostFormInput.apply)(PostFormInput.unapply)
+      )(UserFormInput.apply)(UserFormInput.unapply)
     )
   }
 
@@ -206,12 +206,12 @@ class PostController @Inject()(action: PostAction,
     }
   }
 
-  private def processJsonPost[A]()(implicit request: PostRequest[A]):  Future[Result] = {
-    def failure(badForm: Form[PostFormInput]) = {
+  private def processJsonPost[A]()(implicit request: UsersRequest[A]):  Future[Result] = {
+    def failure(badForm: Form[UserFormInput]) = {
       Future.successful(BadRequest(badForm.errorsAsJson))
     }
 
-    def success(input: PostFormInput) = {
+    def success(input: UserFormInput) = {
       handler.create(input).map { post =>
         Created(Json.toJson(post))
           .withHeaders(LOCATION -> post.link)
@@ -227,32 +227,32 @@ Here, the `process` action is an action wrapper, and `processJsonPost` does most
 
 Here, `form.bindFromRequest()` will map input from the HTTP request to a [`play.api.data.Form`](https://www.playframework.com/documentation/2.5.x/api/scala/index.html#play.api.data.Form), and handles form validation and error reporting.  
 
-If the `PostFormInput` passes validation, it's passed to the resource handler, using the `success` method.  If the form processing fails, then the `failure` method is called and the `FormError` is returned in JSON format.
+If the `UserFormInput` passes validation, it's passed to the resource handler, using the `success` method.  If the form processing fails, then the `failure` method is called and the `FormError` is returned in JSON format.
 
 ```scala
-private val form: Form[PostFormInput] = {
+private val form: Form[UserFormInput] = {
   import play.api.data.Forms._
 
   Form(
     mapping(
       "title" -> nonEmptyText,
       "body" -> text
-    )(PostFormInput.apply)(PostFormInput.unapply)
+    )(UserFormInput.apply)(UserFormInput.unapply)
   )
 }
 ```
 
-The form binds to the HTTP request using the names in the mapping -- "title" and "body" to the `PostFormInput` case class [here](https://github.com/playframework/play-rest-api/blob/master/app/v1/post/PostController.scala#L11).
+The form binds to the HTTP request using the names in the mapping -- "title" and "body" to the `UserFormInput` case class [here](https://github.com/playframework/play-rest-api/blob/master/app/v1/post/UserController.scala#L11).
 
 ```scala
-case class PostFormInput(title: String, body: String)
+case class UserFormInput(title: String, body: String)
 ```
 
 That's all you need to do to handle a basic web application!  As with most things, there are more details that need to be handled.  That's where creating custom Actions comes in.
 
 ## Using Actions
 
-We saw in the `PostController` that each method is connected to an Action through the "action.async" method [here](https://github.com/playframework/play-rest-api/blob/master/app/v1/post/PostController.scala#L32):
+We saw in the `UserController` that each method is connected to an Action through the "action.async" method [here](https://github.com/playframework/play-rest-api/blob/master/app/v1/post/UserController.scala#L32):
 
 ```scala
   def index: Action[AnyContent] = {
@@ -264,13 +264,13 @@ We saw in the `PostController` that each method is connected to an Action throug
   }
 ```
 
-The action.async takes a function, and comes from the class parameter "action", which we can see is of type `PostAction` [here](https://github.com/playframework/play-rest-api/blob/master/app/v1/post/PostController.scala#L16):
+The action.async takes a function, and comes from the class parameter "action", which we can see is of type `UserAction` [here](https://github.com/playframework/play-rest-api/blob/master/app/v1/post/UserController.scala#L16):
 
 ```scala
-class PostController @Inject()(action: PostAction [...])
+class UserController @Inject()(action: UserAction [...])
 ```
 
-`PostAction` is an ActionBuilder.  It is involved in each action in the controller -- it mediates the paperwork involved with processing a request into a response, adding context to the request and enriching the response with headers and cookies.  ActionBuilders are essential for handling authentication, authorization and monitoring functionality.
+`UserAction` is an ActionBuilder.  It is involved in each action in the controller -- it mediates the paperwork involved with processing a request into a response, adding context to the request and enriching the response with headers and cookies.  ActionBuilders are essential for handling authentication, authorization and monitoring functionality.
 
 ActionBuilders work through a process called [action composition](https://www.playframework.com/documentation/2.5.x/ScalaActionsComposition).  The ActionBuilder class has a method called `invokeBlock` that takes in a `Request` and a function (also known as a block, lambda or closure) that accepts a `Request` of a given type, and produces a `Future[Result]`.
 
@@ -302,29 +302,29 @@ And `request.foo` will be added automatically.
 
 You can keep composing action builders inside each other, so you don't have to layer all the functionality in one single ActionBuilder, or you can create a custom `ActionBuilder` for each package you work with, according to your taste.  For the purposes of this blog post, we'll keep everything together in a single class.
 
-You can see PostAction [here](https://github.com/playframework/play-rest-api/blob/master/app/v1/post/PostAction.scala):
+You can see UserAction [here](https://github.com/playframework/play-rest-api/blob/master/app/v1/post/UserAction.scala):
 
 ```scala
-class PostRequest[A](request: Request[A], 
+class UsersRequest[A](request: Request[A], 
                      val messages: Messages)
   extends WrappedRequest(request)
 
-class PostAction @Inject()(messagesApi: MessagesApi)
+class UserAction @Inject()(messagesApi: MessagesApi)
                           (implicit ec: ExecutionContext)
-  extends ActionBuilder[PostRequest] with HttpVerbs {
+  extends ActionBuilder[UsersRequest] with HttpVerbs {
 
-  type PostRequestBlock[A] = PostRequest[A] => Future[Result]
+  type UsersRequestBlock[A] = UsersRequest[A] => Future[Result]
 
   private val logger = org.slf4j.LoggerFactory.getLogger(this.getClass)
 
   override def invokeBlock[A](request: Request[A], 
-                              block: PostRequestBlock[A]) = {
+                              block: UsersRequestBlock[A]) = {
     if (logger.isTraceEnabled()) {
       logger.trace(s"invokeBlock: request = $request")
     }
 
     val messages = messagesApi.preferred(request)
-    val future = block(new PostRequest(request, messages))
+    val future = block(new UsersRequest(request, messages))
 
     future.map { result =>
       request.method match {
@@ -338,67 +338,67 @@ class PostAction @Inject()(messagesApi: MessagesApi)
 }
 ```
 
-`PostAction` does a couple of different things here.  The first thing it does is to log the request as it comes in.  Next, it pulls out the localized `Messages` for the request, and adds that to a `PostRequest` , and runs the function, returning a `Future[Result]`.
+`UserAction` does a couple of different things here.  The first thing it does is to log the request as it comes in.  Next, it pulls out the localized `Messages` for the request, and adds that to a `UsersRequest` , and runs the function, returning a `Future[Result]`.
 
 When the future completes, we map the result so we can replace it with a slightly different result.  We compare the result's method against `HttpVerbs`, and if it's a GET or HEAD, we append a Cache-Control header with a max-age directive.  We need an `ExecutionContext` for `future.map` operations, so we pass in the default execution context implicitly at the top of the class.
 
-Now that we have a `PostRequest`, we can call "request.messages" explicitly from any action in the controller, for free, and we can append information to the result after the user action has been completed.
+Now that we have a `UsersRequest`, we can call "request.messages" explicitly from any action in the controller, for free, and we can append information to the result after the user action has been completed.
 
-## Converting resources with PostResourceHandler
+## Converting resources with UsersResourceHandler
 
-The `PostResourceHandler` is responsible for converting backend data from a repository into a `PostResource`. We won't go into detail on the `PostRepository` details for now, only that it returns data in an backend-centric state.
+The `UsersResourceHandler` is responsible for converting backend data from a repository into a `UsersResource`. We won't go into detail on the `UserRepository` details for now, only that it returns data in an backend-centric state.
 
 A REST resource has information that a backend repository does not -- it knows about the operations available on the resource, and contains URI information that a single backend may not have.  As such, we want to be able to change the representation that we use internally without changing the resource that we expose publicly.  
 
-You can see the `PostResourceHandler` [here](https://github.com/playframework/play-rest-api/blob/master/app/v1/post/PostResourceHandler.scala):
+You can see the `UsersResourceHandler` [here](https://github.com/playframework/play-rest-api/blob/master/app/v1/post/UsersResourceHandler.scala):
 
 ```scala
-class PostResourceHandler @Inject()(routerProvider: Provider[PostRouter],
-                                   postRepository: PostRepository)
+class UsersResourceHandler @Inject()(routerProvider: Provider[UsersRouter],
+                                   userRepository: UserRepository)
                                   (implicit ec: ExecutionContext)
 {
 
- def create(postInput: PostFormInput): Future[PostResource] = {
-   val data = PostData(PostId("999"), postInput.title, postInput.body)
+ def create(userInput: UserFormInput): Future[UsersResource] = {
+   val data = UserData(UserId("999"), userInput.title, userInput.body)
    postRepository.create(data).map { id =>
-     createPostResource(data)
+     UserstePostResource(data)
    }
  }
 
- def lookup(id: String): Future[Option[PostResource]] = {
-   val postFuture = postRepository.get(PostId(id))
-   postFuture.map { maybePostData =>
-     maybePostData.map { postData =>
-       createPostResource(postData)
+ def lookup(id: String): Future[Option[UsersResource]] = {
+   val postFuture = userRepository.get(UserId(id))
+   postFuture.map { maybeUserData =>
+     maybeUserData.map { userData =>
+       UserstePostResource(userData)
      }
    }
  }
 
- def find: Future[Iterable[PostResource]] = {
+ def find: Future[Iterable[UsersResource]] = {
    postRepository.list().map { postDataList =>
-     postDataList.map(postData => createPostResource(postData))
+     userDataList.map(userData => UserstePostResource(userData))
    }
  }
 
- private def createPostResource(p: PostData): PostResource = {
-   PostResource(p.id.toString, routerProvider.get.link(p.id), p.title, p.body)
+ private def UserstePostResource(p: UserData): UsersResource = {
+   UsersResource(p.id.toString, routerProvider.get.link(p.id), p.title, p.body)
  }
 
 }
 ```
 
-Here, it's a straight conversion in `createPostResource`, with the only hook being that the router provides the resource's URL, since it's something that `PostData` doesn't have itself.
+Here, it's a straight conversion in `UserstePostResource`, with the only hook being that the router provides the resource's URL, since it's something that `UserData` doesn't have itself.
 
 ## Rendering Content as JSON
 
-Play handles the work of converting a `PostResource` through [Play JSON](https://www.playframework.com/documentation/2.5.x/ScalaJson). Play JSON provides a DSL that looks up the conversion for the `PostResource` singleton object, so you don't need to declare it at the use point.
+Play handles the work of converting a `UsersResource` through [Play JSON](https://www.playframework.com/documentation/2.5.x/ScalaJson). Play JSON provides a DSL that looks up the conversion for the `UsersResource` singleton object, so you don't need to declare it at the use point.
 
-You can see the `PostResource` object [here](https://github.com/playframework/play-rest-api/blob/master/app/v1/post/PostResourceHandler.scala#L18):
+You can see the `UsersResource` object [here](https://github.com/playframework/play-rest-api/blob/master/app/v1/post/UsersResourceHandler.scala#L18):
 
 ```scala
-object PostResource {
-  implicit val implicitWrites = new Writes[PostResource] {
-    def writes(post: PostResource): JsValue = {
+object UsersResource {
+  implicit val implicitWrites = new Writes[UsersResource] {
+    def writes(post: UsersResource): JsValue = {
       Json.obj(
         "id" -> post.id,
         "link" -> post.link,

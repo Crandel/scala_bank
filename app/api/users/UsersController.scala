@@ -1,4 +1,4 @@
-package v1.post
+package api.users
 
 import javax.inject.Inject
 
@@ -8,24 +8,24 @@ import play.api.mvc._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-case class PostFormInput(title: String, body: String)
+case class UserFormInput(title: String, body: String)
 
 /**
   * Takes HTTP requests and produces JSON.
   */
-class PostController @Inject()(
-    action: PostAction,
-    handler: PostResourceHandler)(implicit ec: ExecutionContext)
+class UserController @Inject()(
+    action: UserAction,
+    handler: UsersResourceHandler)(implicit ec: ExecutionContext)
     extends Controller {
 
-  private val form: Form[PostFormInput] = {
+  private val form: Form[UserFormInput] = {
     import play.api.data.Forms._
 
     Form(
       mapping(
         "title" -> nonEmptyText,
         "body" -> text
-      )(PostFormInput.apply)(PostFormInput.unapply)
+      )(UserFormInput.apply)(UserFormInput.unapply)
     )
   }
 
@@ -52,12 +52,12 @@ class PostController @Inject()(
   }
 
   private def processJsonPost[A]()(
-      implicit request: PostRequest[A]): Future[Result] = {
-    def failure(badForm: Form[PostFormInput]) = {
+      implicit request: UsersRequest[A]): Future[Result] = {
+    def failure(badForm: Form[UserFormInput]) = {
       Future.successful(BadRequest(badForm.errorsAsJson))
     }
 
-    def success(input: PostFormInput) = {
+    def success(input: UserFormInput) = {
       handler.create(input).map { post =>
         Created(Json.toJson(post)).withHeaders(LOCATION -> post.link)
       }
