@@ -1,16 +1,16 @@
-package api
+// package api
 
-import play.api.i18n.Messages
+// import play.api.i18n.Messages
 
-/**
-  * Package object for post.  This is a good place to put implicit conversions.
-  */
-package object post {
+// /**
+//   * Package object for post.  This is a good place to put implicit conversions.
+//   */
+// package object post {
 
-  /**
-    * Converts between UsersRequest and Messages automatically.
-    */
-  implicit def requestToMessages[A](implicit r: UsersRequest[A]): Messages = {
-    r.messages
-  }
-}
+//   /**
+//     * Converts between PostRequest and Messages automatically.
+//     */
+//   implicit def requestToMessages[A](implicit r: PostRequest[A]): Messages = {
+//     r.messages
+//   }
+// }

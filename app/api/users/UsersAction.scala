@@ -1,54 +1,54 @@
-package api.users
+// package api.users
 
-import javax.inject.Inject
+// import javax.inject.Inject
 
-import play.api.http.HttpVerbs
-import play.api.i18n.{Messages, MessagesApi}
-import play.api.mvc._
+// import play.api.http.HttpVerbs
+// import play.api.i18n.{Messages, MessagesApi}
+// import play.api.mvc._
 
-import scala.concurrent.{ExecutionContext, Future}
+// import scala.concurrent.{ExecutionContext, Future}
 
-/**
-  * A wrapped request for post resources.
-  *
-  * This is commonly used to hold request-specific information like
-  * security credentials, and useful shortcut methods.
-  */
-class UsersRequest[A](request: Request[A], val messages: Messages)
-    extends WrappedRequest(request)
+// /**
+//   * A wrapped request for post resources.
+//   *
+//   * This is commonly used to hold request-specific information like
+//   * security credentials, and useful shortcut methods.
+//   */
+// class UsersRequest[A](request: Request[A], val messages: Messages)
+//     extends WrappedRequest(request)
 
-/**
-  * The default action for the Post resource.
-  *
-  * This is the place to put logging, metrics, to augment
-  * the request with contextual data, and manipulate the
-  * result.
-  */
-class UserAction @Inject()(messagesApi: MessagesApi)(
-    implicit ec: ExecutionContext)
-    extends ActionBuilder[UsersRequest]
-    with HttpVerbs {
+// /**
+//   * The default action for the Post resource.
+//   *
+//   * This is the place to put logging, metrics, to augment
+//   * the request with contextual data, and manipulate the
+//   * result.
+//   */
+// class UserAction @Inject()(messagesApi: MessagesApi)(
+//     implicit ec: ExecutionContext)
+//     extends ActionBuilder[UsersRequest]
+//     with HttpVerbs {
 
-  type UsersRequestBlock[A] = UsersRequest[A] => Future[Result]
+//   type UsersRequestBlock[A] = UsersRequest[A] => Future[Result]
 
-  private val logger = org.slf4j.LoggerFactory.getLogger(this.getClass)
+//   private val logger = org.slf4j.LoggerFactory.getLogger(this.getClass)
 
-  override def invokeBlock[A](request: Request[A],
-                              block: UsersRequestBlock[A]): Future[Result] = {
-    if (logger.isTraceEnabled()) {
-      logger.trace(s"invokeBlock: request = $request")
-    }
+//   override def invokeBlock[A](request: Request[A],
+//                               block: UsersRequestBlock[A]): Future[Result] = {
+//     if (logger.isTraceEnabled()) {
+//       logger.trace(s"invokeBlock: request = $request")
+//     }
 
-    val messages = messagesApi.preferred(request)
-    val future = block(new UsersRequest(request, messages))
+//     val messages = messagesApi.preferred(request)
+//     val future = block(new UsersRequest(request, messages))
 
-    future.map { result =>
-      request.method match {
-        case GET | HEAD =>
-          result.withHeaders("Cache-Control" -> s"max-age: 100")
-        case other =>
-          result
-      }
-    }
-  }
-}
+//     future.map { result =>
+//       request.method match {
+//         case GET | HEAD =>
+//           result.withHeaders("Cache-Control" -> s"max-age: 100")
+//         case other =>
+//           result
+//       }
+//     }
+//   }
+// }
