@@ -30,7 +30,7 @@ class UsersController @Inject()(cc: UserControllerComponents)(implicit ec: Execu
 
   def index: Action[AnyContent] = UserAction.async { implicit request =>
     logger.trace("index: ")
-    postResourceHandler.find.map { posts =>
+    userResourceHandler.find.map { posts =>
       Ok(Json.toJson(posts))
     }
   }
@@ -42,7 +42,7 @@ class UsersController @Inject()(cc: UserControllerComponents)(implicit ec: Execu
 
   def show(id: String): Action[AnyContent] = UserAction.async { implicit request =>
     logger.trace(s"show: id = $id")
-    postResourceHandler.lookup(id).map { post =>
+    userResourceHandler.lookup(id).map { post =>
       Ok(Json.toJson(post))
     }
   }
@@ -53,7 +53,7 @@ class UsersController @Inject()(cc: UserControllerComponents)(implicit ec: Execu
     }
 
     def success(input: UserFormInput) = {
-      postResourceHandler.create(input).map { post =>
+      userResourceHandler.create(input).map { post =>
         Created(Json.toJson(post))
       }
     }

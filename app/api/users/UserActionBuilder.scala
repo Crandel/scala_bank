@@ -97,10 +97,10 @@ case class UserControllerComponents @Inject()(userActionBuilder: UserActionBuild
 /**
   * Exposes actions and handler to the UserController by wiring the injected state into the base class.
   */
-class UserBaseController @Inject()(pcc: UserControllerComponents) extends BaseController with RequestMarkerContext {
-  override protected def controllerComponents: ControllerComponents = pcc
+class UserBaseController @Inject()(ucc: UserControllerComponents) extends BaseController with RequestMarkerContext {
+  override protected def controllerComponents: ControllerComponents = ucc
 
-  def UserAction: UserActionBuilder = pcc.userActionBuilder
+  def UserAction: UserActionBuilder = ucc.userActionBuilder
 
-  def postResourceHandler: UserResourceHandler = pcc.userResourceHandler
+  def userResourceHandler: UserResourceHandler = ucc.userResourceHandler
 }
