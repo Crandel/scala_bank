@@ -1,7 +1,7 @@
 package api.transactions
 
 import akka.actor.ActorSystem
-import javax.inject.Inject
+import javax.inject.{Inject,Singleton}
 import play.api.libs.concurrent.CustomExecutionContext
 import play.api.{Logger, MarkerContext}
 

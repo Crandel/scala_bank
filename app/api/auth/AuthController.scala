@@ -17,7 +17,7 @@ class AuthController @Inject()(cc: ControllerComponents) extends AbstractControl
    * will be called when the application receives a `GET` request with
    * a path of `/`.
    */
-  def signin(name: String, login: String, password: String) = Action { implicit request: Request[AnyContent] =>
+  def signing() = Action { implicit request: Request[AnyContent] =>
     Ok("signing")
   }
 

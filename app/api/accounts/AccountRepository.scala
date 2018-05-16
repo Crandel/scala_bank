@@ -1,11 +1,14 @@
 package api.accounts
 
+import scala.concurrent.Future
+
 import akka.actor.ActorSystem
-import javax.inject.Inject
+import javax.inject.{Inject,Singleton}
 import play.api.libs.concurrent.CustomExecutionContext
 import play.api.{Logger, MarkerContext}
 
-import scala.concurrent.Future
+import api.transactions.CurrencyId
+import api.users.UserId
 
 final case class AccountData(id: AccountId, userId: UserId, currencyId: CurrencyId, balance: Double)
 
