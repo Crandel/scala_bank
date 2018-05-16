@@ -2,6 +2,7 @@ package api.users
 
 import akka.actor.ActorSystem
 import javax.inject.{Inject,Singleton}
+import com.google.inject.ImplementedBy
 import play.api.libs.concurrent.CustomExecutionContext
 import play.api.{Logger, MarkerContext}
 
@@ -24,6 +25,7 @@ class UserExecutionContext @Inject()(actorSystem: ActorSystem) extends CustomExe
 /**
   * A pure non-blocking interface for the PostRepository.
   */
+@ImplementedBy(classOf[UserRepositoryImpl])
 trait UserRepository {
   def create(data: UserData)(implicit mc: MarkerContext): Future[UserId]
 

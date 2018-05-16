@@ -84,8 +84,8 @@ class UserActionBuilder @Inject()(messagesApi: MessagesApi, playBodyParsers: Pla
   * This is a good way to minimize the surface area exposed to the controller, so the
   * controller only has to have one thing injected.
   */
-case class UserControllerComponents @Inject()(postActionBuilder: UserActionBuilder,
-                                              postResourceHandler: UserResourceHandler,
+case class UserControllerComponents @Inject()(userActionBuilder: UserActionBuilder,
+                                              userResourceHandler: UserResourceHandler,
                                               actionBuilder: DefaultActionBuilder,
                                               parsers: PlayBodyParsers,
                                               messagesApi: MessagesApi,
@@ -100,7 +100,7 @@ case class UserControllerComponents @Inject()(postActionBuilder: UserActionBuild
 class UserBaseController @Inject()(pcc: UserControllerComponents) extends BaseController with RequestMarkerContext {
   override protected def controllerComponents: ControllerComponents = pcc
 
-  def UserAction: UserActionBuilder = pcc.postActionBuilder
+  def UserAction: UserActionBuilder = pcc.userActionBuilder
 
-  def postResourceHandler: UserResourceHandler = pcc.postResourceHandler
+  def postResourceHandler: UserResourceHandler = pcc.userResourceHandler
 }
