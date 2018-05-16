@@ -1,7 +1,6 @@
-package controllers
+package api.auth
 
 import javax.inject._
-import play.api._
 import play.api.mvc._
 
 /**
@@ -18,8 +17,12 @@ class AuthController @Inject()(cc: ControllerComponents) extends AbstractControl
    * will be called when the application receives a `GET` request with
    * a path of `/`.
    */
+  def signin(name: String, login: String, password: String) = Action { implicit request: Request[AnyContent] =>
+    Ok("signing")
+  }
+
   def login() = Action { implicit request: Request[AnyContent] =>
-    Ok(Login)
+    Ok("Login")
   }
 
   def logout() = Action { implicit request: Request[AnyContent] =>
