@@ -5,7 +5,7 @@ import play.api.routing.Router.Routes
 import play.api.routing.SimpleRouter
 import play.api.routing.sird._
 
-class UsersRouter @Inject()(controller: UsersController) extends SimpleRouter{
+class UsersRouter @Inject()(controller: UsersController) extends SimpleRouter {
   val prefix = "/api/users"
 
   def link(id: UserId): String = {
@@ -23,6 +23,11 @@ class UsersRouter @Inject()(controller: UsersController) extends SimpleRouter{
 
     case GET(p"/$id") =>
       controller.show(id)
-  }
 
+    case PATCH(p"/$id") =>
+      controller.update(id)
+
+    case DELETE(p"/$id") =>
+      controller.delete(id)
+  }
 }

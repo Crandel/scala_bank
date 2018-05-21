@@ -42,11 +42,11 @@ class AccountRepositoryImpl @Inject()()(implicit ec: AccountExecutionContext) ex
   private val logger = Logger(this.getClass)
 
   private val accountList = List(
-    AccountData(AccountId("1"), UserId("1"), CurrencyId("1"), 10.0),
-    AccountData(AccountId("2"), UserId("2"), CurrencyId("2"), 10.0),
-    AccountData(AccountId("3"), UserId("3"), CurrencyId("3"), 10.0),
-    AccountData(AccountId("4"), UserId("4"), CurrencyId("4"), 10.0),
-    AccountData(AccountId("5"), UserId("5"), CurrencyId("5"), 10.0)
+    AccountData(AccountId("1"), UserId(), CurrencyId("1"), 10.0),
+    AccountData(AccountId("2"), UserId(), CurrencyId("2"), 10.0),
+    AccountData(AccountId("3"), UserId(), CurrencyId("3"), 10.0),
+    AccountData(AccountId("4"), UserId(), CurrencyId("4"), 10.0),
+    AccountData(AccountId("5"), UserId(), CurrencyId("5"), 10.0)
   )
 
   override def list()(implicit mc: MarkerContext): Future[Iterable[AccountData]] = {

@@ -42,11 +42,11 @@ class TransactionRepositoryImpl @Inject()()(implicit ec: TransactionExecutionCon
   private val logger = Logger(this.getClass)
 
   private val transactionList = List(
-    TransactionData(TransactionId("1"), UserId("1"), UserId("2"), 5.0),
-    TransactionData(TransactionId("2"), UserId("2"), UserId("1"), 5.0),
-    TransactionData(TransactionId("3"), UserId("2"), UserId("3"), 5.0),
-    TransactionData(TransactionId("4"), UserId("3"), UserId("4"), 5.0),
-    TransactionData(TransactionId("5"), UserId("4"), UserId("5"), 5.0)
+    TransactionData(TransactionId("1"), UserId(), UserId(), 5.0),
+    TransactionData(TransactionId("2"), UserId(), UserId(), 5.0),
+    TransactionData(TransactionId("3"), UserId(), UserId(), 5.0),
+    TransactionData(TransactionId("4"), UserId(), UserId(), 5.0),
+    TransactionData(TransactionId("5"), UserId(), UserId(), 5.0)
   )
 
   override def list()(implicit mc: MarkerContext): Future[Iterable[TransactionData]] = {

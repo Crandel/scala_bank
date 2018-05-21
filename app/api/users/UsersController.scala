@@ -9,10 +9,11 @@ import play.api.mvc._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-case class UserFormInput(name:String, login: String, password: String)
+case class UserFormInput(name: String, login: String, password: String)
 
-class UsersController @Inject()(cc: UserControllerComponents)(implicit ec: ExecutionContext)
-  extends UserBaseController(cc) {
+class UsersController @Inject()(cc: UserControllerComponents)(
+    implicit ec: ExecutionContext)
+    extends UserBaseController(cc) {
 
   private val logger = Logger(getClass)
 
@@ -40,24 +41,65 @@ class UsersController @Inject()(cc: UserControllerComponents)(implicit ec: Execu
     processJsonUser()
   }
 
-  def show(id: String): Action[AnyContent] = UserAction.async { implicit request =>
-    logger.trace(s"show: id = $id")
-    userResourceHandler.lookup(id).map { post =>
-      Ok(Json.toJson(post))
-    }
+  def show(id: String): Action[AnyContent] = UserAction.async {
+    implicit request =>
+      logger.trace(s"show: id = $id")
+      userResourceHandler.lookup(id).map { post =>
+        Ok(Json.toJson(post))
+      }
   }
 
-  private def processJsonUser[A]()(implicit request: UserRequest[A]): Future[Result] = {
+  def update(id: String): Action[AnyContent] = UserAction.async {
+    implicit request =>
+      logger.trace(s"update: id = $id")
+      updateJsonUser(id)
+  }
+
+  def delete(id: String): Action[AnyContent] = UserAction.async {
+    implicit request =>
+      logger.trace(s"show: id = $id")
+      deleteUser(id)
+  }
+
+  private def processJsonUser[A]()(
+      implicit request: UserRequest[A]): Future[Result] = {
     def failure(badForm: Form[UserFormInput]) = {
       Future.successful(BadRequest(badForm.errorsAsJson))
     }
 
     def success(input: UserFormInput) = {
-      userResourceHandler.create(input).map { post =>
-        Created(Json.toJson(post))
+      userResourceHandler.create(input).map { user_id =>
+        Created(Json.toJson(user_id))
+      }
+    }
+    form.bindFromRequest().fold(failure, success)
+  }
+
+  private def updateJsonUser[A](id: String)(
+      implicit request: UserRequest[A]): Future[Result] = {
+    def failure(badForm: Form[UserFormInput]) = {
+      Future.successful(BadRequest(badForm.errorsAsJson))
+    }
+
+    def success(input: UserFormInput) = {
+      val userExists = userResourceHandler.update(id, input)
+      if (userExists) {
+        Future.successful(NoContent)
+      } else {
+        Future.successful(NotFound)
       }
     }
 
     form.bindFromRequest().fold(failure, success)
+  }
+
+  private def deleteUser[A](id: String)(
+      implicit request: UserRequest[A]): Future[Result] = {
+    val userExists = userResourceHandler.delete(id)
+    if (userExists) {
+      Future.successful(NoContent)
+    } else {
+      Future.successful(NotFound)
+    }
   }
 }

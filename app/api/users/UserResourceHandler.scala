@@ -10,7 +10,10 @@ import play.api.libs.json._
 /**
   * DTO for displaying post information.
   */
-case class UserResource(id: String, name: String, login: String, password: String)
+case class UserResource(id: String,
+                        name: String,
+                        login: String,
+                        password: String)
 
 object UserResource {
 
@@ -33,18 +36,12 @@ object UserResource {
   * Controls access to the backend data, returning [[UserResource]]
   */
 class UserResourceHandler @Inject()(
-                                     routerProvider: Provider[UsersRouter],
-                                     userRepository: UserRepository)(implicit ec: ExecutionContext) {
+    routerProvider: Provider[UsersRouter],
+    userRepository: UserRepository)(implicit ec: ExecutionContext) {
 
-  def create(postInput: UserFormInput)(implicit mc: MarkerContext): Future[UserResource] = {
-    val data = UserData(UserId("999"), postInput.name, postInput.login, postInput.password)
-    // We don't actually create the post, so return what we have
-    userRepository.create(data).map { id =>
-      createUserResource(data)
-    }
-  }
-
-  def lookup(id: String)(implicit mc: MarkerContext): Future[Option[UserResource]] = {
+  // get users list
+  def lookup(id: String)(
+    implicit mc: MarkerContext): Future[Option[UserResource]] = {
     val postFuture = userRepository.get(UserId(id))
     postFuture.map { maybeUserData =>
       maybeUserData.map { postData =>
@@ -53,10 +50,42 @@ class UserResourceHandler @Inject()(
     }
   }
 
+  // get single user
   def find(implicit mc: MarkerContext): Future[Iterable[UserResource]] = {
     userRepository.list().map { userDataList =>
       userDataList.map(postData => createUserResource(postData))
     }
+  }
+
+  // create new user
+  def create(postInput: UserFormInput)(
+    implicit mc: MarkerContext): Future[UserId] = {
+    val data = UserData(UserId(),
+      postInput.name,
+      postInput.login,
+      postInput.password)
+    // We don't actually create the post, so return what we have
+    userRepository.create(data)
+  }
+
+  // update existing user
+  def update(id: String, postInput: UserFormInput)(
+    implicit mc: MarkerContext): Boolean= {
+    val user_id = UserId(id)
+    val data = UserData(user_id,
+      postInput.name,
+      postInput.login,
+      postInput.password)
+    // We don't actually create the post, so return what we have
+    userRepository.update(user_id, data)
+  }
+
+  // delete existing user
+  def delete(id: String)(
+    implicit mc: MarkerContext): Boolean= {
+    val user_id = UserId(id)
+    // We don't actually create the post, so return what we have
+    userRepository.delete(user_id)
   }
 
   private def createUserResource(u: UserData): UserResource = {
