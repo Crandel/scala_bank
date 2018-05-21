@@ -56,9 +56,9 @@ trait UserRepository {
 
   def create(data: UserData)(implicit mc: MarkerContext): Future[UserId]
 
-  def update(id: UserId, data: UserData)(implicit mc: MarkerContext): Boolean
+  def update(id: UserId, data: UserData)(implicit mc: MarkerContext): Future[Boolean]
 
-  def delete(id: UserId)(implicit mc: MarkerContext): Boolean
+  def delete(id: UserId)(implicit mc: MarkerContext): Future[Boolean]
 }
 @Singleton
 class UserRepositoryImpl @Inject()()(implicit ec: UserExecutionContext)
@@ -85,29 +85,45 @@ class UserRepositoryImpl @Inject()()(implicit ec: UserExecutionContext)
   override def get(id: UserId)(
       implicit mc: MarkerContext): Future[Option[UserData]] = {
     Future {
-      logger.trace(s"get: id = $id")
+      logger.info(s"get: id = $id")
       userList.find(user => user.id == id)
     }
   }
 
   def create(data: UserData)(implicit mc: MarkerContext): Future[UserId] = {
     Future {
-      logger.trace(s"create: data = $data")
+      logger.info(s"create: data = $data")
       userList += data
       data.id
     }
   }
 
-  def update(id: UserId, data: UserData)(implicit mc: MarkerContext): Boolean = {
-    logger.trace(s"update: data = $data")
-    userList = userList.filter(user => user.id != id)
-    userList += data
-    true
+  def update(id: UserId, data: UserData)(implicit mc: MarkerContext): Future[Boolean] = {
+    Future {
+      logger.info(s"update: data = $data")
+      val currentUser = userList.filter(user => user.id == id)
+      val result = if (currentUser.isEmpty){
+        false
+      } else {
+        userList = userList.filter(user => user.id != id)
+        userList += data
+        true
+      }
+      result
+    }
   }
 
-  def delete(id: UserId)(implicit mc: MarkerContext): Boolean = {
-    logger.trace(s"delete: ")
-    userList = userList.filter(user => user.id != id)
-    true
+  def delete(id: UserId)(implicit mc: MarkerContext): Future[Boolean] = {
+    Future {
+      logger.info(s"delete: ")
+      val currentUser = userList.filter(user => user.id == id)
+      val result = if (currentUser.isEmpty){
+        false
+      } else {
+        userList = userList.filter(user => user.id != id)
+        true
+      }
+      result
+    }
   }
 }

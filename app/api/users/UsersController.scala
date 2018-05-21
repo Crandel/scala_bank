@@ -61,8 +61,7 @@ class UsersController @Inject()(cc: UserControllerComponents)(
       deleteUser(id)
   }
 
-  private def processJsonUser[A]()(
-      implicit request: UserRequest[A]): Future[Result] = {
+  private def processJsonUser[A]()(implicit request: UserRequest[A]): Future[Result] = {
     def failure(badForm: Form[UserFormInput]) = {
       Future.successful(BadRequest(badForm.errorsAsJson))
     }
@@ -75,31 +74,33 @@ class UsersController @Inject()(cc: UserControllerComponents)(
     form.bindFromRequest().fold(failure, success)
   }
 
-  private def updateJsonUser[A](id: String)(
-      implicit request: UserRequest[A]): Future[Result] = {
+  private def updateJsonUser[A](id: String)(implicit request: UserRequest[A]): Future[Result] = {
     def failure(badForm: Form[UserFormInput]) = {
       Future.successful(BadRequest(badForm.errorsAsJson))
     }
 
     def success(input: UserFormInput) = {
-      val userExists = userResourceHandler.update(id, input)
-      if (userExists) {
-        Future.successful(NoContent)
-      } else {
-        Future.successful(NotFound)
+      userResourceHandler.update(id, input).map { userExists: Boolean =>
+        val result = if (userExists){
+          NoContent
+        }else {
+          NotFound
+        }
+        result
       }
     }
 
     form.bindFromRequest().fold(failure, success)
   }
 
-  private def deleteUser[A](id: String)(
-      implicit request: UserRequest[A]): Future[Result] = {
-    val userExists = userResourceHandler.delete(id)
-    if (userExists) {
-      Future.successful(NoContent)
-    } else {
-      Future.successful(NotFound)
+  private def deleteUser[A](id: String)(implicit request: UserRequest[A]): Future[Result] = {
+    userResourceHandler.delete(id).map { userExists: Boolean =>
+        val result = if (userExists){
+          NoContent
+        }else {
+          NotFound
+        }
+        result
     }
   }
 }

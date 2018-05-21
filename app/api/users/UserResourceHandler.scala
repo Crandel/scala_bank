@@ -8,7 +8,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import play.api.libs.json._
 
 /**
-  * DTO for displaying post information.
+  * DTO for displaying user information.
   */
 case class UserResource(id: String,
                         name: String,
@@ -44,8 +44,8 @@ class UserResourceHandler @Inject()(
     implicit mc: MarkerContext): Future[Option[UserResource]] = {
     val postFuture = userRepository.get(UserId(id))
     postFuture.map { maybeUserData =>
-      maybeUserData.map { postData =>
-        createUserResource(postData)
+      maybeUserData.map { userData =>
+        createUserResource(userData)
       }
     }
   }
@@ -53,39 +53,39 @@ class UserResourceHandler @Inject()(
   // get single user
   def find(implicit mc: MarkerContext): Future[Iterable[UserResource]] = {
     userRepository.list().map { userDataList =>
-      userDataList.map(postData => createUserResource(postData))
+      userDataList.map(userData => createUserResource(userData))
     }
   }
 
   // create new user
-  def create(postInput: UserFormInput)(
+  def create(userInput: UserFormInput)(
     implicit mc: MarkerContext): Future[UserId] = {
     val data = UserData(UserId(),
-      postInput.name,
-      postInput.login,
-      postInput.password)
+      userInput.name,
+      userInput.login,
+      userInput.password)
     // We don't actually create the post, so return what we have
     userRepository.create(data)
   }
 
   // update existing user
-  def update(id: String, postInput: UserFormInput)(
-    implicit mc: MarkerContext): Boolean= {
-    val user_id = UserId(id)
-    val data = UserData(user_id,
-      postInput.name,
-      postInput.login,
-      postInput.password)
+  def update(id: String, userInput: UserFormInput)(
+    implicit mc: MarkerContext): Future[Boolean]= {
+    val userIDObj = UserId(id)
+    val data = UserData(userIDObj,
+      userInput.name,
+      userInput.login,
+      userInput.password)
     // We don't actually create the post, so return what we have
-    userRepository.update(user_id, data)
+    userRepository.update(userIDObj, data)
   }
 
   // delete existing user
   def delete(id: String)(
-    implicit mc: MarkerContext): Boolean= {
-    val user_id = UserId(id)
+    implicit mc: MarkerContext): Future[Boolean]= {
+    val userIdObj = UserId(id)
     // We don't actually create the post, so return what we have
-    userRepository.delete(user_id)
+    userRepository.delete(userIdObj)
   }
 
   private def createUserResource(u: UserData): UserResource = {
