@@ -60,6 +60,7 @@ trait UserRepository {
 
   def delete(id: UserId)(implicit mc: MarkerContext): Future[Boolean]
 }
+
 @Singleton
 class UserRepositoryImpl @Inject()()(implicit ec: UserExecutionContext)
     extends UserRepository {
@@ -74,16 +75,14 @@ class UserRepositoryImpl @Inject()()(implicit ec: UserExecutionContext)
     UserData(UserId(), "name 5", "login 5", "password 5")
   )
 
-  override def list()(
-      implicit mc: MarkerContext): Future[Iterable[UserData]] = {
+  override def list()(implicit mc: MarkerContext): Future[Iterable[UserData]] = {
     Future {
       logger.trace(s"list: ")
       userList
     }
   }
 
-  override def get(id: UserId)(
-      implicit mc: MarkerContext): Future[Option[UserData]] = {
+  override def get(id: UserId)(implicit mc: MarkerContext): Future[Option[UserData]] = {
     Future {
       logger.info(s"get: id = $id")
       userList.find(user => user.id == id)
