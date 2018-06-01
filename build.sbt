@@ -10,13 +10,13 @@ lazy val root = (project in file("."))
     scalaVersion := "2.12.4",
     routesGenerator := InjectedRoutesGenerator,
     libraryDependencies ++= Seq(
-      guice, // remove if not using Play's Guice loader
-      akkaHttpServer, // or use nettyServer for Netty
-      logback // add Play logging support
+      guice,
+      akkaHttpServer,
+      logback,
+      "org.joda" % "joda-convert" % "1.9.2",
+      "net.logstash.logback" % "logstash-logback-encoder" % "4.11",
+      "io.lemonlabs" %% "scala-uri" % "1.1.1",
+      "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % Test,
     )
   )
 
-libraryDependencies += "org.joda" % "joda-convert" % "1.9.2"
-libraryDependencies += "net.logstash.logback" % "logstash-logback-encoder" % "4.11"
-libraryDependencies += "io.lemonlabs" %% "scala-uri" % "1.1.1"
-libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % Test

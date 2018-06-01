@@ -7,6 +7,7 @@ import play.api.MarkerContext
 
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.libs.json._
+import api.transactions.{CurrencyRepository, CurrencyData}
 
 /**
   * DTO for displaying account information.
@@ -15,6 +16,8 @@ case class AccountResource(id: String,
                            user: String,
                            currency: String,
                            balance: Double)
+
+
 
 object AccountResource {
 
@@ -38,10 +41,11 @@ object AccountResource {
   */
 class AccountResourceHandler @Inject()(
     routerProvider: Provider[AccountsRouter],
-    accountRepository: AccountRepository)(implicit ec: ExecutionContext) {
+    accountRepository: AccountRepository,
+    currencyRepository: CurrencyRepository)(implicit ec: ExecutionContext) {
 
-  // get accounts list
-  def lookup(id: String)(
+  // get single account
+  def find(id: String)(
     implicit mc: MarkerContext): Future[Option[AccountResource]] = {
     val accountFuture = accountRepository.get(AccountId(id))
     accountFuture.map { maybeAccountData =>
@@ -51,8 +55,8 @@ class AccountResourceHandler @Inject()(
     }
   }
 
-  // get single account
-  def find(implicit mc: MarkerContext): Future[Iterable[AccountResource]] = {
+  // get accounts list
+  def takeList(implicit mc: MarkerContext): Future[Iterable[AccountResource]] = {
     accountRepository.list().map { accountDataList =>
       accountDataList.map(accountData => createAccountResource(accountData))
     }

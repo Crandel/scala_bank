@@ -1,14 +1,14 @@
-package api.accounts
+package api.transactions
 
 import javax.inject.Inject
 import play.api.routing.Router.Routes
 import play.api.routing.SimpleRouter
 import play.api.routing.sird._
 
-class AccountsRouter @Inject()(controller: AccountsController) extends SimpleRouter {
+class TransactionsRouter @Inject()(controller: TransactionsController) extends SimpleRouter {
   val prefix = "/api/accounts"
 
-  def link(id: AccountId): String = {
+  def link(id: TransactionId): String = {
     import io.lemonlabs.uri.dsl._
     val url = prefix / id.toString
     url.toString()

@@ -10,7 +10,7 @@ import play.api.libs.concurrent.CustomExecutionContext
 import play.api.{Logger, MarkerContext}
 import play.api.libs.json._
 
-import api.transactions.CurrencyId
+import api.transactions.{CurrencyId}
 import api.users.UserId
 
 final case class AccountData(
@@ -62,7 +62,7 @@ trait AccountRepository {
 
 
 @Singleton
-class AccountRepositoryImpl @Inject()()(implicit ec: AccountExecutionContext) extends AccountRepository {
+class AccountRepositoryImpl @Inject()()(implicit ec: AccountExecutionContext) extends AccountRepository{
 
   private val logger = Logger(this.getClass)
 

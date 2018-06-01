@@ -1,12 +1,11 @@
 package api.transactions
 
 import scala.concurrent.Future
-
 import akka.actor.ActorSystem
-import javax.inject.{Inject,Singleton}
+import api.accounts.{AccountResource, AccountResourceHandler}
+import javax.inject.{Inject, Singleton}
 import play.api.libs.concurrent.CustomExecutionContext
 import play.api.{Logger, MarkerContext}
-
 import api.users.UserId
 
 
@@ -41,6 +40,7 @@ class TransactionRepositoryImpl @Inject()()(implicit ec: TransactionExecutionCon
 
   private val logger = Logger(this.getClass)
 
+  private val user1 = AccountResourceHandler
   private val transactionList = List(
     TransactionData(TransactionId("1"), UserId(), UserId(), 5.0),
     TransactionData(TransactionId("2"), UserId(), UserId(), 5.0),

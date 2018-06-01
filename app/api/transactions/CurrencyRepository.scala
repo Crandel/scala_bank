@@ -25,8 +25,6 @@ class CurrencyExecutionContext @Inject()(actorSystem: ActorSystem) extends Custo
   * A pure non-blocking interface for the PostRepository.
   */
 trait CurrencyRepository {
-  def create(data: CurrencyData)(implicit mc: MarkerContext): Future[CurrencyId]
-
   def list()(implicit mc: MarkerContext): Future[Iterable[CurrencyData]]
 
   def get(id: CurrencyId)(implicit mc: MarkerContext): Future[Option[CurrencyData]]
@@ -39,16 +37,16 @@ class CurrencyRepositoryImpl @Inject()()(implicit ec: CurrencyExecutionContext) 
   private val logger = Logger(this.getClass)
 
   private val currencyList = List(
-    CurrencyData(CurrencyId("1"), "name 1", "iso2 1"),
-    CurrencyData(CurrencyId("2"), "name 2", "iso2 2"),
-    CurrencyData(CurrencyId("3"), "name 3", "iso2 3"),
-    CurrencyData(CurrencyId("4"), "name 4", "iso2 4"),
-    CurrencyData(CurrencyId("5"), "name 5", "iso2 5")
+    CurrencyData(CurrencyId("1"), "dollar", "USD"),
+    CurrencyData(CurrencyId("2"), "euro", "EUR"),
+    CurrencyData(CurrencyId("3"), "hrivna", "UAH"),
+    CurrencyData(CurrencyId("4"), "ruble", "RUB"),
+    CurrencyData(CurrencyId("5"), "pound", "GBP")
   )
 
   override def list()(implicit mc: MarkerContext): Future[Iterable[CurrencyData]] = {
     Future {
-      logger.trace(s"list: ")
+      logger.info(s"list: ")
       currencyList
     }
   }
@@ -59,12 +57,4 @@ class CurrencyRepositoryImpl @Inject()()(implicit ec: CurrencyExecutionContext) 
       currencyList.find(currency => currency.id == id)
     }
   }
-
-  def create(data: CurrencyData)(implicit mc: MarkerContext): Future[CurrencyId] = {
-    Future {
-      logger.trace(s"create: data = $data")
-      data.id
-    }
-  }
-
 }
