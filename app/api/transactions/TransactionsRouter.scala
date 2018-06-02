@@ -6,7 +6,7 @@ import play.api.routing.SimpleRouter
 import play.api.routing.sird._
 
 class TransactionsRouter @Inject()(controller: TransactionsController) extends SimpleRouter {
-  val prefix = "/api/accounts"
+  val prefix = "/api/transactions"
 
   def link(id: TransactionId): String = {
     import io.lemonlabs.uri.dsl._

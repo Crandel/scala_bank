@@ -87,8 +87,8 @@ class AccountRepositoryImpl @Inject()()(implicit ec: AccountExecutionContext,
     }
   }
 
-  private val currency1 = getCurrencyData("1")
-  private val currency2 = getCurrencyData("2")
+  private val currency1 = getCurrencyData("0")
+  private val currency2 = getCurrencyData("1")
 
   private val user1: UserId = getUserData("1")
   private val user2: UserId = getUserData("2")

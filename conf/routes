@@ -10,3 +10,4 @@ POST     /logout                           api.auth.AuthController.logout
 
 -> /api/users                              api.users.UsersRouter
 -> /api/accounts                           api.accounts.AccountsRouter
+-> /api/transactions                       api.transactions.TransactionsRouter
