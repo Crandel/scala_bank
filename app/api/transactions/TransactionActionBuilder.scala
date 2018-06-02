@@ -1,4 +1,4 @@
-package api.accounts
+package api.transactions
 
 import javax.inject.Inject
 
@@ -11,8 +11,8 @@ import play.api.mvc._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
 
-trait AccountRequestHeader extends MessagesRequestHeader with PreferredMessagesProvider
-class AccountRequest[A](request: Request[A], val messagesApi: MessagesApi) extends WrappedRequest(request) with AccountRequestHeader
+trait TransactionRequestHeader extends MessagesRequestHeader with PreferredMessagesProvider
+class TransactionRequest[A](request: Request[A], val messagesApi: MessagesApi) extends WrappedRequest(request) with TransactionRequestHeader
 
 trait RequestMarkerContext {
   import net.logstash.logback.marker.Markers
@@ -32,31 +32,31 @@ trait RequestMarkerContext {
 }
 
 /**
-  * The action builder for the Account resource.
+  * The action builder for the Transaction resource.
   *
   * This is the place to put logging, metrics, to augment
   * the request with contextual data, and manipulate the
   * result.
   */
-class AccountActionBuilder @Inject()(messagesApi: MessagesApi, playBodyParsers: PlayBodyParsers)
+class TransactionActionBuilder @Inject()(messagesApi: MessagesApi, playBodyParsers: PlayBodyParsers)
                                  (implicit val executionContext: ExecutionContext)
-  extends ActionBuilder[AccountRequest, AnyContent]
+  extends ActionBuilder[TransactionRequest, AnyContent]
     with RequestMarkerContext
     with HttpVerbs {
 
   val parser: BodyParser[AnyContent] = playBodyParsers.anyContent
 
-  type AccountRequestBlock[A] = AccountRequest[A] => Future[Result]
+  type TransactionRequestBlock[A] = TransactionRequest[A] => Future[Result]
 
   private val logger = Logger(this.getClass)
 
   override def invokeBlock[A](request: Request[A],
-                              block: AccountRequestBlock[A]): Future[Result] = {
+                              block: TransactionRequestBlock[A]): Future[Result] = {
     // Convert to marker context and use request in block
     implicit val markerContext: MarkerContext = requestHeaderToMarkerContext(request)
     logger.trace(s"invokeBlock: ")
 
-    val future = block(new AccountRequest(request, messagesApi))
+    val future = block(new TransactionRequest(request, messagesApi))
 
     future.map { result =>
       request.method match {
@@ -75,23 +75,25 @@ class AccountActionBuilder @Inject()(messagesApi: MessagesApi, playBodyParsers: 
   * This is a good way to minimize the surface area exposed to the controller, so the
   * controller only has to have one thing injected.
   */
-case class AccountControllerComponents @Inject()(accountActionBuilder: AccountActionBuilder,
-                                              accountResourceHandler: AccountResourceHandler,
-                                              actionBuilder: DefaultActionBuilder,
-                                              parsers: PlayBodyParsers,
-                                              messagesApi: MessagesApi,
-                                              langs: Langs,
-                                              fileMimeTypes: FileMimeTypes,
-                                              executionContext: scala.concurrent.ExecutionContext)
+case class TransactionControllerComponents @Inject()(transactionActionBuilder: TransactionActionBuilder,
+                                                     transactionResourceHandler: TransactionResourceHandler,
+                                                     currencyResourceHandler: CurrencyResourceHandler,
+                                                     actionBuilder: DefaultActionBuilder,
+                                                     parsers: PlayBodyParsers,
+                                                     messagesApi: MessagesApi,
+                                                     langs: Langs,
+                                                     fileMimeTypes: FileMimeTypes,
+                                                     executionContext: scala.concurrent.ExecutionContext)
   extends ControllerComponents
 
 /**
-  * Exposes actions and handler to the AccountController by wiring the injected state into the base class.
+  * Exposes actions and handler to the TransactionController by wiring the injected state into the base class.
   */
-class AccountBaseController @Inject()(ucc: AccountControllerComponents) extends BaseController with RequestMarkerContext {
+class TransactionBaseController @Inject()(ucc: TransactionControllerComponents) extends BaseController with RequestMarkerContext {
   override protected def controllerComponents: ControllerComponents = ucc
 
-  def AccountAction: AccountActionBuilder = ucc.accountActionBuilder
+  def TransactionAction: TransactionActionBuilder = ucc.transactionActionBuilder
 
-  def accountResourceHandler: AccountResourceHandler = ucc.accountResourceHandler
+  def transactionResourceHandler: TransactionResourceHandler = ucc.transactionResourceHandler
+  def currencyResourceHandler: CurrencyResourceHandler= ucc.currencyResourceHandler
 }

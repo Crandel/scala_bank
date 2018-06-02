@@ -1,100 +1,101 @@
-package api.accounts
+package api.transactions
+
+import scala.concurrent.{ExecutionContext, Future}
 
 import javax.inject.Inject
-
 import play.api.Logger
 import play.api.data.Form
 import play.api.libs.json.Json
 import play.api.mvc._
 
-import scala.concurrent.{ExecutionContext, Future}
 
-case class AccountFormInput(user_id: String, currency_id: String)
+case class TransactionFormInput(source_id: String, destination_id: String, amount: Double)
 
-class AccountsController @Inject()(cc: AccountControllerComponents)(implicit ec: ExecutionContext)
-    extends AccountBaseController(cc) {
+class TransactionsController @Inject()(cc: TransactionControllerComponents)(implicit ec: ExecutionContext)
+    extends TransactionBaseController(cc) {
 
   private val logger = Logger(getClass)
 
-  private val form: Form[AccountFormInput] = {
+  private val form: Form[TransactionFormInput] = {
     import play.api.data.Forms._
 
     Form(
       mapping(
-        "user_id" -> nonEmptyText,
-        "currency_id" -> text
-      )(AccountFormInput.apply)(AccountFormInput.unapply)
+        "source_id" -> nonEmptyText,
+        "destination_id" -> nonEmptyText,
+        "amount" -> bigDecimal
+      )(TransactionFormInput.apply)(TransactionFormInput.unapply)
     )
   }
 
-  def index: Action[AnyContent] = AccountAction.async { implicit request =>
+  def index: Action[AnyContent] = TransactionAction.async { implicit request =>
     logger.trace("index: ")
-    accountResourceHandler.takeList.map { accounts =>
-      Ok(Json.toJson(accounts))
+    transactionResourceHandler.takeList.map { transactions =>
+      Ok(Json.toJson(transactions))
     }
   }
 
-  def currencies: Action[AnyContent] = AccountAction.async {implicit request =>
+  def currencies: Action[AnyContent] = TransactionAction.async {implicit request =>
     logger.trace("currencies: ")
-    accountResourceHandler.takeCurrencyList.map { currency =>
+    currencyResourceHandler.find.map { currency =>
       Ok(Json.toJson(currency))
     }
   }
 
-  def process: Action[AnyContent] = AccountAction.async { implicit request =>
+  def process: Action[AnyContent] = TransactionAction.async { implicit request =>
     logger.trace("process: ")
-    processJsonAccount()
+    processJsonTransaction()
   }
 
-  def show(id: String): Action[AnyContent] = AccountAction.async {
+  def show(id: String): Action[AnyContent] = TransactionAction.async {
     implicit request =>
       logger.trace(s"show: id = $id")
-      accountResourceHandler.find(id).map { post =>
+      transactionResourceHandler.find(id).map { post =>
         Ok(Json.toJson(post))
       }
   }
 
-  def showCurrency(id: String): Action[AnyContent] = AccountAction.async {
+  def showCurrency(id: String): Action[AnyContent] = TransactionAction.async {
     implicit request =>
       logger.trace(s"show currency: id = $id")
-      accountResourceHandler.findCurrency(id).map { post =>
+      currencyResourceHandler.lookup(id).map { post =>
         Ok(Json.toJson(post))
       }
   }
 
-  def update(id: String): Action[AnyContent] = AccountAction.async {
+  def update(id: String): Action[AnyContent] = TransactionAction.async {
     implicit request =>
       logger.trace(s"update: id = $id")
-      updateJsonAccount(id)
+      updateJsonTransaction(id)
   }
 
-  def delete(id: String): Action[AnyContent] = AccountAction.async {
+  def delete(id: String): Action[AnyContent] = TransactionAction.async {
     implicit request =>
       logger.trace(s"show: id = $id")
-      deleteAccount(id)
+      deleteTransaction(id)
   }
 
-  private def processJsonAccount[A]()(implicit request: AccountRequest[A]): Future[Result] = {
-    def failure(badForm: Form[AccountFormInput]) = {
+  private def processJsonTransaction[A]()(implicit request: TransactionRequest[A]): Future[Result] = {
+    def failure(badForm: Form[TransactionFormInput]) = {
       Future.successful(BadRequest(badForm.errorsAsJson))
     }
 
-    def success(input: AccountFormInput) = {
-      accountResourceHandler.create(input).map { account_id =>
-        Created(Json.toJson(account_id))
+    def success(input: TransactionFormInput) = {
+      transactionResourceHandler.create(input).map { transaction_id =>
+        Created(Json.toJson(transaction_id))
       }
     }
     form.bindFromRequest().fold(failure, success)
   }
 
-  private def updateJsonAccount[A](id: String)(implicit request: AccountRequest[A]): Future[Result] = {
-    def failure(badForm: Form[AccountFormInput]) = {
+  private def updateJsonTransaction[A](id: String)(implicit request: TransactionRequest[A]): Future[Result] = {
+    def failure(badForm: Form[TransactionFormInput]) = {
       Future.successful(BadRequest(badForm.errorsAsJson))
     }
 
-    def success(input: AccountFormInput) = {
-      accountResourceHandler.update(id, input).map { accountExists: Boolean =>
-        val result = if (accountExists){
+    def success(input: TransactionFormInput) = {
+      transactionResourceHandler.update(id, input).map { transactionExists: Boolean =>
+        val result = if (transactionExists){
           NoContent
         }else {
           NotFound
@@ -106,9 +107,9 @@ class AccountsController @Inject()(cc: AccountControllerComponents)(implicit ec:
     form.bindFromRequest().fold(failure, success)
   }
 
-  private def deleteAccount[A](id: String)(implicit request: AccountRequest[A]): Future[Result] = {
-    accountResourceHandler.delete(id).map { accountExists: Boolean =>
-        val result = if (accountExists){
+  private def deleteTransaction[A](id: String)(implicit request: TransactionRequest[A]): Future[Result] = {
+    transactionResourceHandler.delete(id).map { transactionExists: Boolean =>
+        val result = if (transactionExists){
           NoContent
         }else {
           NotFound

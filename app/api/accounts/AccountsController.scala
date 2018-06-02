@@ -9,7 +9,7 @@ import play.api.mvc._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-case class AccountFormInput(user_id: String, currency_id: String)
+case class AccountFormInput(user_id: String, currency_id: String, balance: Double)
 
 class AccountsController @Inject()(cc: AccountControllerComponents)(implicit ec: ExecutionContext)
     extends AccountBaseController(cc) {
@@ -21,8 +21,9 @@ class AccountsController @Inject()(cc: AccountControllerComponents)(implicit ec:
 
     Form(
       mapping(
-        "user_id" -> nonEmptyText,
-        "currency_id" -> text
+        "account_id" -> nonEmptyText,
+        "currency_id" -> nonEmptyText,
+        "balance" -> bigDecimal
       )(AccountFormInput.apply)(AccountFormInput.unapply)
     )
   }
@@ -34,13 +35,6 @@ class AccountsController @Inject()(cc: AccountControllerComponents)(implicit ec:
     }
   }
 
-  def currencies: Action[AnyContent] = AccountAction.async {implicit request =>
-    logger.trace("currencies: ")
-    accountResourceHandler.takeCurrencyList.map { currency =>
-      Ok(Json.toJson(currency))
-    }
-  }
-
   def process: Action[AnyContent] = AccountAction.async { implicit request =>
     logger.trace("process: ")
     processJsonAccount()
@@ -49,16 +43,8 @@ class AccountsController @Inject()(cc: AccountControllerComponents)(implicit ec:
   def show(id: String): Action[AnyContent] = AccountAction.async {
     implicit request =>
       logger.trace(s"show: id = $id")
-      accountResourceHandler.find(id).map { post =>
-        Ok(Json.toJson(post))
-      }
-  }
-
-  def showCurrency(id: String): Action[AnyContent] = AccountAction.async {
-    implicit request =>
-      logger.trace(s"show currency: id = $id")
-      accountResourceHandler.findCurrency(id).map { post =>
-        Ok(Json.toJson(post))
+      accountResourceHandler.find(id).map { account =>
+        Ok(Json.toJson(account))
       }
   }
 

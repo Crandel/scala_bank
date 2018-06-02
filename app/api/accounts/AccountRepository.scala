@@ -1,17 +1,16 @@
 package api.accounts
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.collection.mutable
-
 import akka.actor.ActorSystem
-import javax.inject.{Inject,Singleton}
+import javax.inject.{Inject, Singleton}
 import com.google.inject.ImplementedBy
 import play.api.libs.concurrent.CustomExecutionContext
 import play.api.{Logger, MarkerContext}
 import play.api.libs.json._
-
-import api.transactions.{CurrencyId}
-import api.users.UserId
+import api.transactions.{CurrencyId, CurrencyRepository}
+import api.users.{UserId, UserRepository}
 
 final case class AccountData(
   id: AccountId,
@@ -62,16 +61,49 @@ trait AccountRepository {
 
 
 @Singleton
-class AccountRepositoryImpl @Inject()()(implicit ec: AccountExecutionContext) extends AccountRepository{
+class AccountRepositoryImpl @Inject()()(implicit ec: AccountExecutionContext,
+                                        implicit val ur: UserRepository,
+                                        implicit val cr: CurrencyRepository) extends AccountRepository{
 
   private val logger = Logger(this.getClass)
 
+  private val currencyFuture1 = ur.get(UserId("1"))
+
+  private val user1: UserId = ur.get(UserId("1")).result(10.seconds) match {
+    case Some(userData) => userData.id
+  }
+
+  private val user2: UserId = ur.get(UserId("2")).result(10.seconds) match {
+    case Some(userData) => userData.id
+  }
+
+  private val user3: UserId = ur.get(UserId("3")).result(10.seconds) match {
+    case Some(userData) => userData.id
+  }
+
+  private val user4: UserId = ur.get(UserId("4")).result(10.seconds) match {
+    case Some(userData) => userData.id
+  }
+
+  private val user5: UserId = ur.get(UserId("5")).result(10.seconds) match {
+    case Some(userData) => userData.id
+  }
+
+  private val currency1: CurrencyId = cr.get(CurrencyId("1")).result(10.seconds) match {
+    case Some(currencyData) => currencyData.id
+  }
+
+  private val currency2: CurrencyId = cr.get(CurrencyId("2")).result(10.seconds) match {
+    case Some(currencyData) => currencyData.id
+  }
+
+
   private var accountList = mutable.MutableList(
-    AccountData(AccountId(), UserId(), CurrencyId("1"), 10.0),
-    AccountData(AccountId(), UserId(), CurrencyId("2"), 10.0),
-    AccountData(AccountId(), UserId(), CurrencyId("3"), 10.0),
-    AccountData(AccountId(), UserId(), CurrencyId("4"), 10.0),
-    AccountData(AccountId(), UserId(), CurrencyId("5"), 10.0)
+    AccountData(AccountId(), user1, currency1, 50.0),
+    AccountData(AccountId(), user2, currency2, 30.0),
+    AccountData(AccountId(), user3, currency1, 10.0),
+    AccountData(AccountId(), user4, currency1, 10.0),
+    AccountData(AccountId(), user5, currency1, 10.0)
   )
 
   override def list()(implicit mc: MarkerContext): Future[Iterable[AccountData]] = {

@@ -1,24 +1,41 @@
 package api.transactions
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
+
 import akka.actor.ActorSystem
-import api.accounts.{AccountResource, AccountResourceHandler}
 import javax.inject.{Inject, Singleton}
 import play.api.libs.concurrent.CustomExecutionContext
 import play.api.{Logger, MarkerContext}
-import api.users.UserId
+
+import api.accounts.{AccountId, AccountRepository}
+import play.api.libs.json.{Json, Writes}
 
 
-final case class TransactionData(id: TransactionId, sourceAccount: UserId, destinationAccount: UserId, amount: Double)
+final case class TransactionData(id: TransactionId, sourceAccount: AccountId, destinationAccount: AccountId, amount: Double)
 
 class TransactionId private (val underlying: Int) extends AnyVal {
   override def toString: String = underlying.toString
 }
 
 object TransactionId {
-  def apply(raw: String): TransactionId = {
-    require(raw != null)
-    new TransactionId(Integer.parseInt(raw))
+  private var counter: Int = 0
+  private var currentId: Int = 0
+
+  implicit val transactionIdWrites = new Writes[TransactionId] {
+    def writes(transaction: TransactionId) = Json.obj(
+      "id" -> transaction.toString
+    )
+  }
+
+  def apply(raw: String = ""): TransactionId = {
+    if (raw == "" ){
+      currentId = counter
+      counter += 1
+    } else {
+      currentId = Integer.parseInt(raw)
+    }
+    new TransactionId(currentId)
   }
 }
 
@@ -36,17 +53,26 @@ trait TransactionRepository {
 
 
 @Singleton
-class TransactionRepositoryImpl @Inject()()(implicit ec: TransactionExecutionContext) extends TransactionRepository {
+class TransactionRepositoryImpl @Inject()()(implicit ec: TransactionExecutionContext, implicit val ar: AccountRepository) extends TransactionRepository {
 
   private val logger = Logger(this.getClass)
 
-  private val user1 = AccountResourceHandler
+  private val accountFuture1 = ar.get(AccountId("1"))
+  private val accountFuture2 = ar.get(AccountId("1"))
+  private val account1: AccountId = accountFuture1.result(10.seconds) match {
+    case Some(accountData) => accountData.id
+  }
+
+  private val account2: AccountId = accountFuture2.result(10.seconds) match {
+    case Some(accountData) => accountData.id
+  }
+
   private val transactionList = List(
-    TransactionData(TransactionId("1"), UserId(), UserId(), 5.0),
-    TransactionData(TransactionId("2"), UserId(), UserId(), 5.0),
-    TransactionData(TransactionId("3"), UserId(), UserId(), 5.0),
-    TransactionData(TransactionId("4"), UserId(), UserId(), 5.0),
-    TransactionData(TransactionId("5"), UserId(), UserId(), 5.0)
+    TransactionData(TransactionId(), account1, account2, 5.0),
+    TransactionData(TransactionId(), account1, account2, 2.0),
+    TransactionData(TransactionId(), account2, account1, 1.0),
+    TransactionData(TransactionId(), account2, account1, 8.0),
+    TransactionData(TransactionId(), account1, account2, 4.0)
   )
 
   override def list()(implicit mc: MarkerContext): Future[Iterable[TransactionData]] = {

@@ -1,8 +1,9 @@
 package api.transactions
 
 import akka.actor.ActorSystem
-import javax.inject.{Inject,Singleton}
+import javax.inject.{Inject, Singleton}
 import play.api.libs.concurrent.CustomExecutionContext
+import play.api.libs.json.{Json, Writes}
 import play.api.{Logger, MarkerContext}
 
 import scala.concurrent.Future
@@ -14,9 +15,23 @@ class CurrencyId private (val underlying: Int) extends AnyVal {
 }
 
 object CurrencyId {
-  def apply(raw: String): CurrencyId = {
-    require(raw != null)
-    new CurrencyId(Integer.parseInt(raw))
+  private var counter: Int = 0
+  private var currentId: Int = 0
+
+  implicit val userWrites = new Writes[CurrencyId] {
+    def writes(currency: CurrencyId) = Json.obj(
+      "id" -> currency.toString
+    )
+  }
+
+  def apply(raw: String = ""): CurrencyId = {
+    if (raw == "" ){
+      currentId = counter
+      counter += 1
+    } else {
+      currentId = Integer.parseInt(raw)
+    }
+    new CurrencyId(currentId)
   }
 }
 
@@ -37,11 +52,11 @@ class CurrencyRepositoryImpl @Inject()()(implicit ec: CurrencyExecutionContext) 
   private val logger = Logger(this.getClass)
 
   private val currencyList = List(
-    CurrencyData(CurrencyId("1"), "dollar", "USD"),
-    CurrencyData(CurrencyId("2"), "euro", "EUR"),
-    CurrencyData(CurrencyId("3"), "hrivna", "UAH"),
-    CurrencyData(CurrencyId("4"), "ruble", "RUB"),
-    CurrencyData(CurrencyId("5"), "pound", "GBP")
+    CurrencyData(CurrencyId(), "dollar", "USD"),
+    CurrencyData(CurrencyId(), "euro", "EUR"),
+    CurrencyData(CurrencyId(), "hrivna", "UAH"),
+    CurrencyData(CurrencyId(), "ruble", "RUB"),
+    CurrencyData(CurrencyId(), "pound", "GBP")
   )
 
   override def list()(implicit mc: MarkerContext): Future[Iterable[CurrencyData]] = {

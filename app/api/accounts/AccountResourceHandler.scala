@@ -30,7 +30,7 @@ object AccountResource {
         "id" -> account.id,
         "user" -> account.user,
         "currency" -> account.currency,
-        "balanse" -> account.balance
+        "balance" -> account.balance
       )
     }
   }
@@ -40,9 +40,8 @@ object AccountResource {
   * Controls access to the backend data, returning [[AccountResource]]
   */
 class AccountResourceHandler @Inject()(
-    routerProvider: Provider[AccountsRouter],
-    accountRepository: AccountRepository,
-    currencyRepository: CurrencyRepository)(implicit ec: ExecutionContext) {
+    //routerProvider: Provider[AccountsRouter],
+    accountRepository: AccountRepository)(implicit ec: ExecutionContext) {
 
   // get single account
   def find(id: String)(

@@ -1,6 +1,6 @@
 package api.transactions
 
-import api.transactions.CurrencyId
+import api.accounts.AccountId
 import api.users.UserId
 import javax.inject.{Inject, Provider}
 import play.api.MarkerContext
@@ -64,7 +64,7 @@ class TransactionResourceHandler @Inject()(
   def create(transactionInput: TransactionFormInput)(
     implicit mc: MarkerContext): Future[TransactionId] = {
     val data = TransactionData(TransactionId(),
-      UserId(transactionInput.user_id),
+      AccountId(transactionInput.account_id),
       CurrencyId(transactionInput.currency_id),
       0)
     // We don't actually create the post, so return what we have
