@@ -64,9 +64,9 @@ class TransactionResourceHandler @Inject()(
   def create(transactionInput: TransactionFormInput)(
     implicit mc: MarkerContext): Future[TransactionId] = {
     val data = TransactionData(TransactionId(),
-      AccountId(transactionInput.account_id),
-      CurrencyId(transactionInput.currency_id),
-      0)
+      AccountId(transactionInput.source_id),
+      AccountId(transactionInput.destination_id),
+      transactionInput.amount)
     // We don't actually create the post, so return what we have
     transactionRepository.create(data)
   }
@@ -76,9 +76,9 @@ class TransactionResourceHandler @Inject()(
     implicit mc: MarkerContext): Future[Boolean]= {
     val transactionIDObj = TransactionId(id)
     val data = TransactionData(transactionIDObj,
-      UserId(transactionInput.user_id),
-      CurrencyId(transactionInput.currency_id),
-      0)
+      AccountId(transactionInput.source_id),
+      AccountId(transactionInput.destination_id),
+      transactionInput.amount)
     // We don't actually create the post, so return what we have
     transactionRepository.update(transactionIDObj, data)
   }

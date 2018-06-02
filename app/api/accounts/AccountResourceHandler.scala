@@ -46,6 +46,7 @@ class AccountResourceHandler @Inject()(
   // get single account
   def find(id: String)(
     implicit mc: MarkerContext): Future[Option[AccountResource]] = {
+    println(id)
     val accountFuture = accountRepository.get(AccountId(id))
     accountFuture.map { maybeAccountData =>
       maybeAccountData.map { accountData =>

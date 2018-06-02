@@ -1,6 +1,7 @@
 package api.transactions
 
 import akka.actor.ActorSystem
+import com.google.inject.ImplementedBy
 import javax.inject.{Inject, Singleton}
 import play.api.libs.concurrent.CustomExecutionContext
 import play.api.libs.json.{Json, Writes}
@@ -39,6 +40,7 @@ class CurrencyExecutionContext @Inject()(actorSystem: ActorSystem) extends Custo
 /**
   * A pure non-blocking interface for the PostRepository.
   */
+@ImplementedBy(classOf[CurrencyRepositoryImpl])
 trait CurrencyRepository {
   def list()(implicit mc: MarkerContext): Future[Iterable[CurrencyData]]
 

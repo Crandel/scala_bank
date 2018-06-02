@@ -15,6 +15,12 @@ class TransactionsRouter @Inject()(controller: TransactionsController) extends S
   }
 
   override def routes: Routes = {
+    case GET(p"/currencies/") =>
+      controller.currencies
+
+    case GET(p"/currencies/$id") =>
+      controller.showCurrency(id)
+
     case GET(p"/") =>
       controller.index
 
@@ -29,11 +35,5 @@ class TransactionsRouter @Inject()(controller: TransactionsController) extends S
 
     case DELETE(p"/$id") =>
       controller.delete(id)
-
-    case GET(p"/currencies") =>
-      controller.currencies
-
-    case GET(p"/currencies/$id") =>
-      controller.showCurrency(id)
   }
 }

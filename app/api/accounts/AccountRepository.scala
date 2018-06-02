@@ -1,6 +1,6 @@
 package api.accounts
 
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import scala.collection.mutable
 import akka.actor.ActorSystem
@@ -9,8 +9,10 @@ import com.google.inject.ImplementedBy
 import play.api.libs.concurrent.CustomExecutionContext
 import play.api.{Logger, MarkerContext}
 import play.api.libs.json._
-import api.transactions.{CurrencyId, CurrencyRepository}
-import api.users.{UserId, UserRepository}
+import api.transactions.{CurrencyData, CurrencyId, CurrencyRepository}
+import api.users.{UserData, UserId, UserRepository}
+
+import scala.util.{Success, Try}
 
 final case class AccountData(
   id: AccountId,
@@ -67,35 +69,32 @@ class AccountRepositoryImpl @Inject()()(implicit ec: AccountExecutionContext,
 
   private val logger = Logger(this.getClass)
 
-  private val currencyFuture1 = ur.get(UserId("1"))
-
-  private val user1: UserId = ur.get(UserId("1")).result(10.seconds) match {
-    case Some(userData) => userData.id
+  private def getUserData(id: String) = {
+    Try(Await.result(ur.get(UserId(id)), 1.seconds)) match {
+      case Success(userDataOpt: Option[UserData]) => userDataOpt match {
+        case Some(userData) => userData.id
+        case None => UserId(id)
+      }
+    }
   }
 
-  private val user2: UserId = ur.get(UserId("2")).result(10.seconds) match {
-    case Some(userData) => userData.id
+  private def getCurrencyData(id: String) = {
+    Try(Await.result(cr.get(CurrencyId(id)), 1.seconds)) match {
+      case Success(currencyDataOpt: Option[CurrencyData]) => currencyDataOpt match {
+        case Some(currencyData) => currencyData.id
+        case None => CurrencyId(id)
+      }
+    }
   }
 
-  private val user3: UserId = ur.get(UserId("3")).result(10.seconds) match {
-    case Some(userData) => userData.id
-  }
+  private val currency1 = getCurrencyData("1")
+  private val currency2 = getCurrencyData("2")
 
-  private val user4: UserId = ur.get(UserId("4")).result(10.seconds) match {
-    case Some(userData) => userData.id
-  }
-
-  private val user5: UserId = ur.get(UserId("5")).result(10.seconds) match {
-    case Some(userData) => userData.id
-  }
-
-  private val currency1: CurrencyId = cr.get(CurrencyId("1")).result(10.seconds) match {
-    case Some(currencyData) => currencyData.id
-  }
-
-  private val currency2: CurrencyId = cr.get(CurrencyId("2")).result(10.seconds) match {
-    case Some(currencyData) => currencyData.id
-  }
+  private val user1: UserId = getUserData("1")
+  private val user2: UserId = getUserData("2")
+  private val user3: UserId = getUserData("3")
+  private val user4: UserId = getUserData("4")
+  private val user5: UserId = getUserData("5")
 
 
   private var accountList = mutable.MutableList(

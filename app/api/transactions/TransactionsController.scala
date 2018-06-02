@@ -18,12 +18,13 @@ class TransactionsController @Inject()(cc: TransactionControllerComponents)(impl
 
   private val form: Form[TransactionFormInput] = {
     import play.api.data.Forms._
+    import play.api.data.format.Formats._
 
     Form(
       mapping(
         "source_id" -> nonEmptyText,
         "destination_id" -> nonEmptyText,
-        "amount" -> bigDecimal
+        "amount" -> of[Double]
       )(TransactionFormInput.apply)(TransactionFormInput.unapply)
     )
   }
@@ -50,8 +51,8 @@ class TransactionsController @Inject()(cc: TransactionControllerComponents)(impl
   def show(id: String): Action[AnyContent] = TransactionAction.async {
     implicit request =>
       logger.trace(s"show: id = $id")
-      transactionResourceHandler.find(id).map { post =>
-        Ok(Json.toJson(post))
+      transactionResourceHandler.find(id).map { transaction =>
+        Ok(Json.toJson(transaction))
       }
   }
 

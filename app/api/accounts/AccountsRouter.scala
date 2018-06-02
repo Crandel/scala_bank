@@ -29,11 +29,5 @@ class AccountsRouter @Inject()(controller: AccountsController) extends SimpleRou
 
     case DELETE(p"/$id") =>
       controller.delete(id)
-
-    case GET(p"/currencies") =>
-      controller.currencies
-
-    case GET(p"/currencies/$id") =>
-      controller.showCurrency(id)
   }
 }

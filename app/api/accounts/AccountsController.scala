@@ -18,12 +18,13 @@ class AccountsController @Inject()(cc: AccountControllerComponents)(implicit ec:
 
   private val form: Form[AccountFormInput] = {
     import play.api.data.Forms._
+    import play.api.data.format.Formats._
 
     Form(
       mapping(
         "account_id" -> nonEmptyText,
         "currency_id" -> nonEmptyText,
-        "balance" -> bigDecimal
+        "balance" -> of[Double]
       )(AccountFormInput.apply)(AccountFormInput.unapply)
     )
   }

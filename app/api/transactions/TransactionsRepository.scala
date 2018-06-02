@@ -1,15 +1,16 @@
 package api.transactions
 
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
-
+import scala.util.{Success, Try}
+import scala.collection.mutable
 import akka.actor.ActorSystem
 import javax.inject.{Inject, Singleton}
 import play.api.libs.concurrent.CustomExecutionContext
 import play.api.{Logger, MarkerContext}
-
-import api.accounts.{AccountId, AccountRepository}
 import play.api.libs.json.{Json, Writes}
+import api.accounts.{AccountData, AccountId, AccountRepository}
+import com.google.inject.ImplementedBy
 
 
 final case class TransactionData(id: TransactionId, sourceAccount: AccountId, destinationAccount: AccountId, amount: Double)
@@ -43,12 +44,18 @@ class TransactionExecutionContext @Inject()(actorSystem: ActorSystem) extends Cu
 /**
   * A pure non-blocking interface for the PostRepository.
   */
+@ImplementedBy(classOf[TransactionRepositoryImpl])
 trait TransactionRepository {
   def create(data: TransactionData)(implicit mc: MarkerContext): Future[TransactionId]
 
   def list()(implicit mc: MarkerContext): Future[Iterable[TransactionData]]
 
   def get(id: TransactionId)(implicit mc: MarkerContext): Future[Option[TransactionData]]
+
+  def update(id: TransactionId, data: TransactionData)(implicit mc: MarkerContext): Future[Boolean]
+
+  def delete(id: TransactionId)(implicit mc: MarkerContext): Future[Boolean]
+
 }
 
 
@@ -57,17 +64,19 @@ class TransactionRepositoryImpl @Inject()()(implicit ec: TransactionExecutionCon
 
   private val logger = Logger(this.getClass)
 
-  private val accountFuture1 = ar.get(AccountId("1"))
-  private val accountFuture2 = ar.get(AccountId("1"))
-  private val account1: AccountId = accountFuture1.result(10.seconds) match {
-    case Some(accountData) => accountData.id
+  private def getAccountData(id: String) = {
+    Try(Await.result(ar.get(AccountId(id)), 10.seconds)) match {
+      case Success(accountDataOpt: Option[AccountData]) => accountDataOpt match {
+        case Some(accountData) => accountData.id
+        case None => AccountId(id)
+      }
+    }
   }
 
-  private val account2: AccountId = accountFuture2.result(10.seconds) match {
-    case Some(accountData) => accountData.id
-  }
+  private val account1 = getAccountData("1")
+  private val account2 = getAccountData("2")
 
-  private val transactionList = List(
+  private var transactionList = mutable.MutableList(
     TransactionData(TransactionId(), account1, account2, 5.0),
     TransactionData(TransactionId(), account1, account2, 2.0),
     TransactionData(TransactionId(), account2, account1, 1.0),
@@ -95,4 +104,34 @@ class TransactionRepositoryImpl @Inject()()(implicit ec: TransactionExecutionCon
       data.id
     }
   }
+
+  def update(id: TransactionId, data: TransactionData)(implicit mc: MarkerContext): Future[Boolean] = {
+    Future {
+      logger.info(s"update: data = $data")
+      val currentTransaction = transactionList.filter(transaction => transaction.id == id)
+      val result = if (currentTransaction.isEmpty){
+        false
+      } else {
+        transactionList = transactionList.filter(transaction => transaction.id != id)
+        transactionList += data
+        true
+      }
+      result
+    }
+  }
+
+  def delete(id: TransactionId)(implicit mc: MarkerContext): Future[Boolean] = {
+    Future {
+      logger.info(s"delete: ")
+      val currentTransaction = transactionList.filter(transaction => transaction.id == id)
+      val result = if (currentTransaction.isEmpty){
+        false
+      } else {
+        transactionList = transactionList.filter(transaction => transaction.id != id)
+        true
+      }
+      result
+    }
+  }
+
 }
