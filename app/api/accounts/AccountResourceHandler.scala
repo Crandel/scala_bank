@@ -1,13 +1,11 @@
 package api.accounts
 
-import api.transactions.CurrencyId
-import api.users.UserId
-import javax.inject.{Inject, Provider}
+import javax.inject.Inject
 import play.api.MarkerContext
 
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.libs.json._
-import api.transactions.{CurrencyRepository, CurrencyData}
+import db.{AccountData, AccountId, CurrencyId, UserId}
 
 /**
   * DTO for displaying account information.
@@ -47,7 +45,7 @@ class AccountResourceHandler @Inject()(
   def find(id: String)(
     implicit mc: MarkerContext): Future[Option[AccountResource]] = {
     println(id)
-    val accountFuture = accountRepository.get(AccountId(id))
+    val accountFuture = accountRepository.get(id)
     accountFuture.map { maybeAccountData =>
       maybeAccountData.map { accountData =>
         createAccountResource(accountData)
@@ -68,29 +66,24 @@ class AccountResourceHandler @Inject()(
     val data = AccountData(AccountId(),
       UserId(accountInput.user_id),
       CurrencyId(accountInput.currency_id),
-      0)
-    // We don't actually create the post, so return what we have
+      accountInput.balance)
     accountRepository.create(data)
   }
 
   // update existing account
   def update(id: String, accountInput: AccountFormInput)(
     implicit mc: MarkerContext): Future[Boolean]= {
-    val accountIDObj = AccountId(id)
-    val data = AccountData(accountIDObj,
+    val data = AccountData(AccountId(id),
       UserId(accountInput.user_id),
       CurrencyId(accountInput.currency_id),
-      0)
-    // We don't actually create the post, so return what we have
-    accountRepository.update(accountIDObj, data)
+      accountInput.balance)
+    accountRepository.update(data)
   }
 
   // delete existing account
   def delete(id: String)(
     implicit mc: MarkerContext): Future[Boolean]= {
-    val accountIdObj = AccountId(id)
-    // We don't actually create the post, so return what we have
-    accountRepository.delete(accountIdObj)
+    accountRepository.delete(id)
   }
 
   private def createAccountResource(u: AccountData): AccountResource = {

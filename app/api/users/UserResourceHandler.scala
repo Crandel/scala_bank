@@ -1,7 +1,7 @@
 package api.users
 
+import db.{UserData, UserId}
 import javax.inject.{Inject, Provider}
-
 import play.api.MarkerContext
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -20,7 +20,7 @@ object UserResource {
   /**
     * Mapping to write a UserResource out as a JSON value.
     */
-  implicit val implicitWrites = new Writes[UserResource] {
+  implicit val implicitWrites: Writes[UserResource] = new Writes[UserResource] {
     def writes(user: UserResource): JsValue = {
       Json.obj(
         "id" -> user.id,
@@ -42,7 +42,7 @@ class UserResourceHandler @Inject()(
   // get users list
   def lookup(id: String)(
     implicit mc: MarkerContext): Future[Option[UserResource]] = {
-    val postFuture = userRepository.get(UserId(id))
+    val postFuture = userRepository.get(id)
     postFuture.map { maybeUserData =>
       maybeUserData.map { userData =>
         createUserResource(userData)
@@ -64,28 +64,23 @@ class UserResourceHandler @Inject()(
       userInput.name,
       userInput.login,
       userInput.password)
-    // We don't actually create the post, so return what we have
     userRepository.create(data)
   }
 
   // update existing user
   def update(id: String, userInput: UserFormInput)(
     implicit mc: MarkerContext): Future[Boolean]= {
-    val userIDObj = UserId(id)
-    val data = UserData(userIDObj,
+    val data = UserData(UserId(id),
       userInput.name,
       userInput.login,
       userInput.password)
-    // We don't actually create the post, so return what we have
-    userRepository.update(userIDObj, data)
+    userRepository.update(data)
   }
 
   // delete existing user
   def delete(id: String)(
     implicit mc: MarkerContext): Future[Boolean]= {
-    val userIdObj = UserId(id)
-    // We don't actually create the post, so return what we have
-    userRepository.delete(userIdObj)
+    userRepository.delete(id)
   }
 
   private def createUserResource(u: UserData): UserResource = {

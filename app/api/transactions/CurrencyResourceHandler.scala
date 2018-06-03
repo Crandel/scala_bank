@@ -1,7 +1,7 @@
 package api.transactions
 
-import javax.inject.{Inject, Provider}
-
+import db.CurrencyData
+import javax.inject.Inject
 import play.api.MarkerContext
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -20,7 +20,7 @@ object CurrencyResource {
   /**
     * Mapping to write a CurrencyResource out as a JSON value.
     */
-  implicit val implicitWrites = new Writes[CurrencyResource] {
+  implicit val implicitWrites: Writes[CurrencyResource] = new Writes[CurrencyResource] {
     def writes(currency: CurrencyResource): JsValue = {
       Json.obj(
         "id" -> currency.id,
@@ -40,7 +40,7 @@ class CurrencyResourceHandler @Inject()(currencyRepository: CurrencyRepository)
   // get currency list
   def lookup(id: String)(
     implicit mc: MarkerContext): Future[Option[CurrencyResource]] = {
-    val currencyFuture = currencyRepository.get(CurrencyId(id))
+    val currencyFuture = currencyRepository.get(id)
     currencyFuture.map { maybeCurrencyData =>
       maybeCurrencyData.map { currencyData =>
         createCurrencyResource(currencyData)

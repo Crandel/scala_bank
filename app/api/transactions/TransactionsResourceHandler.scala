@@ -1,7 +1,6 @@
 package api.transactions
 
-import api.accounts.AccountId
-import api.users.UserId
+import db.{AccountId, TransactionData, TransactionId}
 import javax.inject.{Inject, Provider}
 import play.api.MarkerContext
 
@@ -45,7 +44,7 @@ class TransactionResourceHandler @Inject()(
   // get single transaction
   def find(id: String)(
     implicit mc: MarkerContext): Future[Option[TransactionResource]] = {
-    val transactionFuture = transactionRepository.get(TransactionId(id))
+    val transactionFuture = transactionRepository.get(id)
     transactionFuture.map { maybeTransactionData =>
       maybeTransactionData.map { transactionData =>
         createTransactionResource(transactionData)
@@ -67,31 +66,27 @@ class TransactionResourceHandler @Inject()(
       AccountId(transactionInput.source_id),
       AccountId(transactionInput.destination_id),
       transactionInput.amount)
-    // We don't actually create the post, so return what we have
     transactionRepository.create(data)
   }
 
   // update existing transaction
   def update(id: String, transactionInput: TransactionFormInput)(
     implicit mc: MarkerContext): Future[Boolean]= {
-    val transactionIDObj = TransactionId(id)
-    val data = TransactionData(transactionIDObj,
+    val data = TransactionData(TransactionId(id),
       AccountId(transactionInput.source_id),
       AccountId(transactionInput.destination_id),
       transactionInput.amount)
-    // We don't actually create the post, so return what we have
-    transactionRepository.update(transactionIDObj, data)
+    transactionRepository.update(data)
   }
 
   // delete existing transaction
   def delete(id: String)(
     implicit mc: MarkerContext): Future[Boolean]= {
-    val transactionIdObj = TransactionId(id)
-    // We don't actually create the post, so return what we have
-    transactionRepository.delete(transactionIdObj)
+    transactionRepository.delete(id)
   }
 
   private def createTransactionResource(trData: TransactionData): TransactionResource = {
     TransactionResource(trData.id.toString, trData.sourceAccount.toString, trData.destinationAccount.toString, trData.amount)
   }
 }
+
