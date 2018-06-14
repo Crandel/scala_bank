@@ -15,7 +15,6 @@ class AccountId private (val underlying: Int) extends AnyVal {
 }
 
 object AccountId {
-  private var counter: Int = 0
   private var currentId: Int = 0
 
   implicit val accountWrites: Writes[AccountId] = new Writes[AccountId] {
@@ -25,13 +24,13 @@ object AccountId {
   }
 
   def apply(raw: String = ""): AccountId = {
+    var counter = currentId
     if (raw == "" ){
-      currentId = counter
-      counter += 1
+      currentId += 1
     } else {
-      currentId = Integer.parseInt(raw)
+      counter = Integer.parseInt(raw)
     }
-    new AccountId(currentId)
+    new AccountId(counter)
   }
 }
 

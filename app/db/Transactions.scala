@@ -11,7 +11,6 @@ class TransactionId private (val underlying: Int) extends AnyVal {
 }
 
 object TransactionId {
-  private var counter: Int = 0
   private var currentId: Int = 0
 
   implicit val transactionIdWrites: Writes[TransactionId] = new Writes[TransactionId] {
@@ -21,13 +20,13 @@ object TransactionId {
   }
 
   def apply(raw: String = ""): TransactionId = {
+    var counter = currentId
     if (raw == "" ){
-      currentId = counter
-      counter += 1
+      currentId += 1
     } else {
-      currentId = Integer.parseInt(raw)
+      counter = Integer.parseInt(raw)
     }
-    new TransactionId(currentId)
+    new TransactionId(counter)
   }
 }
 

@@ -12,7 +12,6 @@ class CurrencyId private (val underlying: Int) extends AnyVal {
 }
 
 object CurrencyId {
-  private var counter: Int = 0
   private var currentId: Int = 0
 
   implicit val currencyWrites = new Writes[CurrencyId] {
@@ -22,13 +21,13 @@ object CurrencyId {
   }
 
   def apply(raw: String = ""): CurrencyId = {
+    var counter = currentId
     if (raw == "" ){
-      currentId = counter
-      counter += 1
+      currentId += 1
     } else {
-      currentId = Integer.parseInt(raw)
+      counter = Integer.parseInt(raw)
     }
-    new CurrencyId(currentId)
+    new CurrencyId(counter)
   }
 }
 

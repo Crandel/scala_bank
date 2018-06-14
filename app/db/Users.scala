@@ -15,8 +15,7 @@ class UserId private (val underlying: Int) extends AnyVal {
 }
 
 object UserId {
-  private var counter: Int = 0
-  private var current_id: Int = 0
+  private var currentId: Int = 0
 
   implicit val userWrites: Writes[UserId] = new Writes[UserId] {
     def writes(user: UserId): JsObject = Json.obj(
@@ -25,13 +24,13 @@ object UserId {
   }
 
   def apply(raw: String = ""): UserId = {
+    var counter = currentId
     if (raw == "" ){
-      current_id = counter
-      counter += 1
+      currentId += 1
     } else {
-      current_id = Integer.parseInt(raw)
+      counter = Integer.parseInt(raw)
     }
-    new UserId(current_id)
+    new UserId(counter)
   }
 }
 
