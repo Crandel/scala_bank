@@ -1,13 +1,15 @@
 package api.transactions
 
+import scala.concurrent.Future
+
 import akka.actor.ActorSystem
 import com.google.inject.ImplementedBy
-import db.{Currencies, CurrencyData, CurrencyId}
 import javax.inject.{Inject, Singleton}
 import play.api.libs.concurrent.CustomExecutionContext
 import play.api.{Logger, MarkerContext}
 
-import scala.concurrent.Future
+import db.{Currencies, CurrencyData, CurrencyId}
+
 
 class CurrencyExecutionContext @Inject()(actorSystem: ActorSystem) extends CustomExecutionContext(actorSystem, "repository.dispatcher")
 /**
