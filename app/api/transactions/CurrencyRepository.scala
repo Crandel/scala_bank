@@ -8,7 +8,7 @@ import javax.inject.{Inject, Singleton}
 import play.api.libs.concurrent.CustomExecutionContext
 import play.api.{Logger, MarkerContext}
 
-import db.{Currencies, CurrencyData, CurrencyId}
+import db.{Currencies, CurrencyData}
 
 
 class CurrencyExecutionContext @Inject()(actorSystem: ActorSystem) extends CustomExecutionContext(actorSystem, "repository.dispatcher")
@@ -17,9 +17,9 @@ class CurrencyExecutionContext @Inject()(actorSystem: ActorSystem) extends Custo
   */
 @ImplementedBy(classOf[CurrencyRepositoryImpl])
 trait CurrencyRepository {
-  def list()(implicit mc: MarkerContext): Future[Iterable[CurrencyData]]
+  def map()(implicit mc: MarkerContext): Future[Map[Int, CurrencyData]]
 
-  def get(id: String)(implicit mc: MarkerContext): Future[Option[CurrencyData]]
+  def get(id: Int)(implicit mc: MarkerContext): Future[Option[CurrencyData]]
 }
 
 
@@ -28,14 +28,14 @@ class CurrencyRepositoryImpl @Inject()()(implicit ec: CurrencyExecutionContext) 
 
   private val logger = Logger(this.getClass)
 
-  override def list()(implicit mc: MarkerContext): Future[Iterable[CurrencyData]] = {
+  override def map()(implicit mc: MarkerContext): Future[Map[Int, CurrencyData]] = {
     Future {
       logger.info(s"list: ")
-      Currencies.list()
+      Currencies.map()
     }
   }
 
-  override def get(id: String)(implicit mc: MarkerContext): Future[Option[CurrencyData]] = {
+  override def get(id: Int)(implicit mc: MarkerContext): Future[Option[CurrencyData]] = {
     Future {
       logger.trace(s"get: id = $id")
       Currencies.get(id)

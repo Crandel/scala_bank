@@ -6,7 +6,7 @@ import javax.inject.{Inject, Singleton}
 import com.google.inject.ImplementedBy
 import play.api.libs.concurrent.CustomExecutionContext
 import play.api.{Logger, MarkerContext}
-import db.{AccountData, AccountId, Accounts}
+import db.{AccountData, Accounts}
 import api.users.UserRepository
 
 
@@ -14,15 +14,15 @@ class AccountExecutionContext @Inject()(actorSystem: ActorSystem) extends Custom
 
 @ImplementedBy(classOf[AccountRepositoryImpl])
 trait AccountRepository {
-  def list()(implicit mc: MarkerContext): Future[Iterable[AccountData]]
+  def map()(implicit mc: MarkerContext): Future[Map[Int, AccountData]]
 
-  def get(id: String)(implicit mc: MarkerContext): Future[Option[AccountData]]
+  def get(id: Int)(implicit mc: MarkerContext): Future[Option[AccountData]]
 
-  def create(data: AccountData)(implicit mc: MarkerContext): Future[AccountId]
+  def create(data: AccountData)(implicit mc: MarkerContext): Future[Option[Int]]
 
-  def update(data: AccountData)(implicit mc: MarkerContext): Future[Boolean]
+  def update(id: Int, data: AccountData)(implicit mc: MarkerContext): Future[Boolean]
 
-  def delete(id: String)(implicit mc: MarkerContext): Future[Boolean]
+  def delete(id: Int)(implicit mc: MarkerContext): Future[Boolean]
 }
 
 
@@ -32,35 +32,35 @@ class AccountRepositoryImpl @Inject()()(implicit ec: AccountExecutionContext,
 
   private val logger = Logger(this.getClass)
 
-  override def list()(implicit mc: MarkerContext): Future[Iterable[AccountData]] = {
+  override def map()(implicit mc: MarkerContext): Future[Map[Int, AccountData]] = {
     Future {
       logger.info(s"list: ")
-      Accounts.list()
+      Accounts.map()
     }
   }
 
-  override def get(id: String)(implicit mc: MarkerContext): Future[Option[AccountData]] = {
+  override def get(id: Int)(implicit mc: MarkerContext): Future[Option[AccountData]] = {
     Future {
       logger.info(s"get: id = $id")
       Accounts.get(id)
     }
   }
 
-  def create(data: AccountData)(implicit mc: MarkerContext): Future[AccountId] = {
+  def create(data: AccountData)(implicit mc: MarkerContext): Future[Option[Int]] = {
     Future {
       logger.info(s"create: data = $data")
       Accounts.create(data)
     }
   }
 
-  def update(data: AccountData)(implicit mc: MarkerContext): Future[Boolean] = {
+  def update(id: Int, data: AccountData)(implicit mc: MarkerContext): Future[Boolean] = {
     Future {
       logger.info(s"update: data = $data")
-      Accounts.update(data)
+      Accounts.update(id, data)
     }
   }
 
-  def delete(id: String)(implicit mc: MarkerContext): Future[Boolean] = {
+  def delete(id: Int)(implicit mc: MarkerContext): Future[Boolean] = {
     Future {
       logger.info(s"delete: ")
       Accounts.delete(id)

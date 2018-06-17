@@ -1,18 +1,18 @@
 package api.accounts
 
-import javax.inject.Inject
+import javax.inject.{Inject, Provider}
 import play.api.MarkerContext
 
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.libs.json._
-import db.{AccountData, AccountId, CurrencyId, UserId}
+import db.AccountData
 
 /**
   * DTO for displaying account information.
   */
-case class AccountResource(id: String,
-                           user: String,
-                           currency: String,
+case class AccountResource(id: Int,
+                           user: Int,
+                           currency: Int,
                            balance: Double)
 
 
@@ -22,7 +22,7 @@ object AccountResource {
   /**
     * Mapping to write a UserResource out as a JSON value.
     */
-  implicit val implicitWrites = new Writes[AccountResource] {
+  implicit val implicitWrites: Writes[AccountResource] = new Writes[AccountResource] {
     def writes(account: AccountResource): JsValue = {
       Json.obj(
         "id" -> account.id,
@@ -38,55 +38,54 @@ object AccountResource {
   * Controls access to the backend data, returning [[AccountResource]]
   */
 class AccountResourceHandler @Inject()(
-    //routerProvider: Provider[AccountsRouter],
+    routerProvider: Provider[AccountsRouter],
     accountRepository: AccountRepository)(implicit ec: ExecutionContext) {
 
   // get single account
-  def find(id: String)(
+  def find(id: Int)(
     implicit mc: MarkerContext): Future[Option[AccountResource]] = {
-    println(id)
     val accountFuture = accountRepository.get(id)
     accountFuture.map { maybeAccountData =>
       maybeAccountData.map { accountData =>
-        createAccountResource(accountData)
+        createAccountResource(id, accountData)
       }
     }
   }
 
   // get accounts list
-  def takeList(implicit mc: MarkerContext): Future[Iterable[AccountResource]] = {
-    accountRepository.list().map { accountDataList =>
-      accountDataList.map(accountData => createAccountResource(accountData))
+  def findAll(implicit mc: MarkerContext): Future[Iterable[AccountResource]] = {
+    accountRepository.map().map { accountDataList =>
+      accountDataList.map(accountData => createAccountResource(accountData._1, accountData._2))
     }
   }
 
   // create new account
   def create(accountInput: AccountFormInput)(
-    implicit mc: MarkerContext): Future[AccountId] = {
-    val data = AccountData(AccountId(),
-      UserId(accountInput.user_id),
-      CurrencyId(accountInput.currency_id),
+    implicit mc: MarkerContext): Future[Option[Int]] = {
+    val data = AccountData(
+      accountInput.user_id,
+      accountInput.currency_id,
       accountInput.balance)
     accountRepository.create(data)
   }
 
   // update existing account
-  def update(id: String, accountInput: AccountFormInput)(
+  def update(id: Int, accountInput: AccountFormInput)(
     implicit mc: MarkerContext): Future[Boolean]= {
-    val data = AccountData(AccountId(id),
-      UserId(accountInput.user_id),
-      CurrencyId(accountInput.currency_id),
+    val data = AccountData(
+      accountInput.user_id,
+      accountInput.currency_id,
       accountInput.balance)
-    accountRepository.update(data)
+    accountRepository.update(id, data)
   }
 
   // delete existing account
-  def delete(id: String)(
+  def delete(id: Int)(
     implicit mc: MarkerContext): Future[Boolean]= {
     accountRepository.delete(id)
   }
 
-  private def createAccountResource(u: AccountData): AccountResource = {
-    AccountResource(u.id.toString, u.userId.toString, u.currencyId.toString, u.balance)
+  private def createAccountResource(id: Int, u: AccountData): AccountResource = {
+    AccountResource(id, u.userId, u.currencyId, u.balance)
   }
 }

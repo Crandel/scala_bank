@@ -19,15 +19,15 @@ class UserExecutionContext @Inject()(actorSystem: ActorSystem)
   */
 @ImplementedBy(classOf[UserRepositoryImpl])
 trait UserRepository {
-  def list()(implicit mc: MarkerContext): Future[Iterable[UserData]]
+  def map()(implicit mc: MarkerContext): Future[Map[Int, UserData]]
 
-  def get(id: String)(implicit mc: MarkerContext): Future[Option[UserData]]
+  def get(id: Int)(implicit mc: MarkerContext): Future[Option[UserData]]
 
-  def create(data: UserData)(implicit mc: MarkerContext): Future[UserId]
+  def create(data: UserData)(implicit mc: MarkerContext): Future[Int]
 
-  def update(data: UserData)(implicit mc: MarkerContext): Future[Boolean]
+  def update(id: Int, data: UserData)(implicit mc: MarkerContext): Future[Boolean]
 
-  def delete(id: String)(implicit mc: MarkerContext): Future[Boolean]
+  def delete(id: Int)(implicit mc: MarkerContext): Future[Boolean]
 }
 
 @Singleton
@@ -36,35 +36,35 @@ class UserRepositoryImpl @Inject()()(implicit ec: UserExecutionContext)
 
   private val logger = Logger(this.getClass)
 
-  override def list()(implicit mc: MarkerContext): Future[Iterable[UserData]] = {
+  override def map()(implicit mc: MarkerContext): Future[Map[Int, UserData]] = {
     Future {
       logger.trace(s"list: ")
-      Users.list()
+      Users.map()
     }
   }
 
-  override def get(id: String)(implicit mc: MarkerContext): Future[Option[UserData]] = {
+  override def get(id: Int)(implicit mc: MarkerContext): Future[Option[UserData]] = {
     Future {
       logger.info(s"get: id = $id")
       Users.get(id)
     }
   }
 
-  def create(data: UserData)(implicit mc: MarkerContext): Future[UserId] = {
+  def create(data: UserData)(implicit mc: MarkerContext): Future[Int] = {
     Future {
       logger.info(s"create: data = $data")
       Users.create(data)
     }
   }
 
-  def update(data: UserData)(implicit mc: MarkerContext): Future[Boolean] = {
+  def update(id: Int, data: UserData)(implicit mc: MarkerContext): Future[Boolean] = {
     Future {
       logger.info(s"update: data = $data")
-      Users.update(data)
+      Users.update(id, data)
     }
   }
 
-  def delete(id: String)(implicit mc: MarkerContext): Future[Boolean] = {
+  def delete(id: Int)(implicit mc: MarkerContext): Future[Boolean] = {
     Future {
       logger.info(s"delete: ")
       Users.delete(id)

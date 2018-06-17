@@ -1,85 +1,59 @@
 package db
 
-import play.api.libs.json.{Json, Writes}
 
 import scala.collection.mutable
 
 
-final case class CurrencyData(id: CurrencyId, name: String, iso2: String)
-
-class CurrencyId private (val underlying: Int) extends AnyVal {
-  override def toString: String = underlying.toString
-}
-
-object CurrencyId {
-  private var currentId: Int = 0
-
-  implicit val currencyWrites = new Writes[CurrencyId] {
-    def writes(currency: CurrencyId) = Json.obj(
-      "id" -> currency.toString
-    )
-  }
-
-  def apply(raw: String = ""): CurrencyId = {
-    var counter = currentId
-    if (raw == "" ){
-      currentId += 1
-    } else {
-      counter = Integer.parseInt(raw)
-    }
-    new CurrencyId(counter)
-  }
-}
+final case class CurrencyData(name: String, iso2: String)
 
 object Currencies {
 
   private def init() = {
-    mutable.MutableList(
-      CurrencyData(CurrencyId(), "dollar", "USD"),
-      CurrencyData(CurrencyId(), "euro", "EUR"),
-      CurrencyData(CurrencyId(), "hrivna", "UAH"),
-      CurrencyData(CurrencyId(), "ruble", "RUB"),
-      CurrencyData(CurrencyId(), "pound", "GBP")
+    mutable.HashMap(
+      1 -> CurrencyData("dollar", "USD"),
+      2 -> CurrencyData("euro", "EUR"),
+      3 -> CurrencyData("pound", "GBP"),
+      4 -> CurrencyData("hrivna", "UAH"),
+      5 -> CurrencyData("ruble", "RUB")
     )
 
   }
 
-  private var currencyList = init()
+  private val currencyMap = init()
 
-  def list(): mutable.MutableList[CurrencyData] = {
-    currencyList
+  def map(): Map[Int, CurrencyData] = {
+    currencyMap.toMap
   }
 
-  def get(id: String): Option[CurrencyData] = {
-    currencyList.find(currency => currency.id == CurrencyId(id))
+  def checkId(id: Int): Boolean = {
+    currencyMap.contains(id)
   }
 
-  def create(data: CurrencyData): CurrencyId = {
-    currencyList += data
-    data.id
+  def get(id: Int): Option[CurrencyData] = {
+    if (checkId(id)) Some(currencyMap(id)) else None
   }
 
-  def update(data: CurrencyData): Boolean = {
-    val currentCurrency = currencyList.filter(currency => currency.id == data.id)
-    val result = if (currentCurrency.isEmpty){
-      false
-    } else {
-      currencyList = currencyList.filter(currency => currency.id != data.id)
-      currencyList += data
+  def create(data: CurrencyData): Int = {
+    val newKey = currencyMap.keys.max + 1
+    currencyMap(newKey) = data
+    newKey
+  }
+
+  def update(id: Int, data: CurrencyData): Boolean = {
+    if (checkId(id)){
+      currencyMap(id) = data
       true
+    } else {
+      false
     }
-    result
   }
 
-  def delete(id: String): Boolean = {
-    val uId = CurrencyId(id)
-    val currentCurrency = currencyList.filter(currency => currency.id == uId)
-    val result = if (currentCurrency.isEmpty){
-      false
-    } else {
-      currencyList = currencyList.filter(currency => currency.id != uId)
+  def delete(id: Int): Boolean = {
+    if (checkId(id)){
+      currencyMap - id
       true
+    } else {
+      false
     }
-    result
   }
 }

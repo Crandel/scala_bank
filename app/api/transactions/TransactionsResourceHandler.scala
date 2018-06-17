@@ -1,6 +1,6 @@
 package api.transactions
 
-import db.{AccountId, TransactionData, TransactionId}
+import db.TransactionData
 import javax.inject.{Inject, Provider}
 import play.api.MarkerContext
 
@@ -10,9 +10,9 @@ import play.api.libs.json._
 /**
   * DTO for displaying transaction information.
   */
-case class TransactionResource(id: String,
-                               source_user: String,
-                               destination_user: String,
+case class TransactionResource(id: Int,
+                               source_user: Int,
+                               destination_user: Int,
                                amount: Double)
 
 
@@ -21,7 +21,7 @@ object TransactionResource {
   /**
     * Mapping to write a UserResource out as a JSON value.
     */
-  implicit val implicitWrites = new Writes[TransactionResource] {
+  implicit val implicitWrites: Writes[TransactionResource] = new Writes[TransactionResource] {
     def writes(transaction: TransactionResource): JsValue = {
       Json.obj(
         "id" -> transaction.id,
@@ -42,51 +42,35 @@ class TransactionResourceHandler @Inject()(
     currencyRepository: CurrencyRepository)(implicit ec: ExecutionContext) {
 
   // get single transaction
-  def find(id: String)(
+  def find(id: Int)(
     implicit mc: MarkerContext): Future[Option[TransactionResource]] = {
     val transactionFuture = transactionRepository.get(id)
     transactionFuture.map { maybeTransactionData =>
       maybeTransactionData.map { transactionData =>
-        createTransactionResource(transactionData)
+        createTransactionResource(id, transactionData)
       }
     }
   }
 
   // get transactions list
   def takeList(implicit mc: MarkerContext): Future[Iterable[TransactionResource]] = {
-    transactionRepository.list().map { transactionDataList =>
-      transactionDataList.map(transactionData => createTransactionResource(transactionData))
+    transactionRepository.map().map { transactionDataList =>
+      transactionDataList.map(transactionData => createTransactionResource(transactionData._1, transactionData._2))
     }
   }
 
   // create new transaction
   def create(transactionInput: TransactionFormInput)(
-    implicit mc: MarkerContext): Future[TransactionId] = {
-    val data = TransactionData(TransactionId(),
-      AccountId(transactionInput.source_id),
-      AccountId(transactionInput.destination_id),
+    implicit mc: MarkerContext): Future[Option[Int]] = {
+    val data = TransactionData(
+      transactionInput.source_id,
+      transactionInput.destination_id,
       transactionInput.amount)
     transactionRepository.create(data)
   }
 
-  // update existing transaction
-  def update(id: String, transactionInput: TransactionFormInput)(
-    implicit mc: MarkerContext): Future[Boolean]= {
-    val data = TransactionData(TransactionId(id),
-      AccountId(transactionInput.source_id),
-      AccountId(transactionInput.destination_id),
-      transactionInput.amount)
-    transactionRepository.update(data)
-  }
-
-  // delete existing transaction
-  def delete(id: String)(
-    implicit mc: MarkerContext): Future[Boolean]= {
-    transactionRepository.delete(id)
-  }
-
-  private def createTransactionResource(trData: TransactionData): TransactionResource = {
-    TransactionResource(trData.id.toString, trData.sourceAccount.toString, trData.destinationAccount.toString, trData.amount)
+  private def createTransactionResource(id: Int, trData: TransactionData): TransactionResource = {
+    TransactionResource(id, trData.sourceAccount, trData.destinationAccount, trData.amount)
   }
 }
 

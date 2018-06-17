@@ -10,7 +10,7 @@ import play.api.libs.json._
 /**
   * DTO for displaying currency information.
   */
-case class CurrencyResource(id: String,
+case class CurrencyResource(id: Int,
                             name: String,
                             iso2: String)
 
@@ -37,25 +37,26 @@ object CurrencyResource {
 class CurrencyResourceHandler @Inject()(currencyRepository: CurrencyRepository)
                                        (implicit ec: ExecutionContext) {
 
-  // get currency list
-  def lookup(id: String)(
+  // get single currency
+  def get(id: Int)(
     implicit mc: MarkerContext): Future[Option[CurrencyResource]] = {
     val currencyFuture = currencyRepository.get(id)
     currencyFuture.map { maybeCurrencyData =>
       maybeCurrencyData.map { currencyData =>
-        createCurrencyResource(currencyData)
+        createCurrencyResource(id, currencyData)
       }
     }
   }
 
-  // get single currency
-  def find(implicit mc: MarkerContext): Future[Iterable[CurrencyResource]] = {
-    currencyRepository.list().map { currencyDataList =>
-      currencyDataList.map(currencyData => createCurrencyResource(currencyData))
+  // get currency list
+  def findAll(implicit mc: MarkerContext): Future[Iterable[CurrencyResource]] = {
+    currencyRepository.map().map { currencyDataList =>
+      currencyDataList.map(currencyData => createCurrencyResource(currencyData._1, currencyData._2))
     }
   }
 
-  private def createCurrencyResource(c: CurrencyData): CurrencyResource = {
-    CurrencyResource(c.id.toString, c.name, c.iso2)
+  // create currency resource for response
+  private def createCurrencyResource(id: Int, c: CurrencyData): CurrencyResource = {
+    CurrencyResource(id, c.name, c.iso2)
   }
 }

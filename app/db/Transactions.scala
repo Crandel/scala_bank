@@ -1,92 +1,81 @@
 package db
 
-import play.api.libs.json.{JsObject, Json, Writes}
+import com.typesafe.config.Config
+import javax.inject.Inject
 
 import scala.collection.mutable
 
-final case class TransactionData(id: TransactionId, sourceAccount: AccountId, destinationAccount: AccountId, amount: Double)
-
-class TransactionId private (val underlying: Int) extends AnyVal {
-  override def toString: String = underlying.toString
-}
-
-object TransactionId {
-  private var currentId: Int = 0
-
-  implicit val transactionIdWrites: Writes[TransactionId] = new Writes[TransactionId] {
-    def writes(transaction: TransactionId): JsObject = Json.obj(
-      "id" -> transaction.toString
-    )
-  }
-
-  def apply(raw: String = ""): TransactionId = {
-    var counter = currentId
-    if (raw == "" ){
-      currentId += 1
-    } else {
-      counter = Integer.parseInt(raw)
-    }
-    new TransactionId(counter)
-  }
-}
+final case class TransactionData(sourceAccount: Int, destinationAccount: Int, amount: Double)
 
 object Transactions {
-  private def getAccountId(id: String): AccountId = {
-    val uData = Accounts.get(id)
-    uData match {
-      case Some(ud) => ud.id
+
+  @Inject() val conf: Config = null
+
+  private def getAccountId(id: Int): Int = {
+    if (Accounts.checkId(id)) id else 0
+  }
+
+  private def getCoefficient(sourceIso: String, destIso: String) = {
+    //import scalaj.http._
+    //val response: HttpResponse[Map[String,String]] = Http(s"http://data.fixer.io/api/latest?access_key=${conf.fixer.api_key}").execute(parser = {inputStream =>
+    //  Json.parse[Map[String,String]](inputStream)
+    //})
+  }
+
+  private def changeBalances(data: TransactionData): Boolean = {
+    val sourceAcc = Accounts.get(data.sourceAccount)
+    val destAcc = Accounts.get(data.destinationAccount)
+    (sourceAcc, destAcc) match {
+      case (Some(sa), Some(da)) => {
+        if (sa.balance - data.amount > 0) {
+          //val sourceCurrency = Currencies.get(sa.currencyId)
+          //val destinationCurrency = Currencies.get(da.currencyId)
+
+          sa.balance -= data.amount
+          da.balance += data.amount
+          true
+        } else {
+          false
+        }
+      }
+      case _ => false
     }
   }
 
   private def init() = {
-    val account1 = getAccountId("1")
-    val account2 = getAccountId("2")
+    val account1 = getAccountId(1)
+    val account2 = getAccountId(2)
 
-    mutable.MutableList(
-      TransactionData(TransactionId(), account1, account2, 5.0),
-      TransactionData(TransactionId(), account1, account2, 2.0),
-      TransactionData(TransactionId(), account2, account1, 1.0),
-      TransactionData(TransactionId(), account2, account1, 8.0),
-      TransactionData(TransactionId(), account1, account2, 4.0)
+    mutable.HashMap(
+      1 -> TransactionData(account1, account2, 5.0),
+      2 -> TransactionData(account1, account2, 2.0),
+      3 -> TransactionData(account2, account1, 1.0),
+      4 -> TransactionData(account2, account1, 8.0),
+      5 -> TransactionData(account1, account2, 4.0)
     )
   }
 
-  private var transactionList = init()
+  private val transactionMap = init()
 
-  def list(): mutable.MutableList[TransactionData] = {
-    transactionList
+  def checkId(id: Int): Boolean = {
+    transactionMap.contains(id)
   }
 
-  def get(id: String): Option[TransactionData] = {
-    transactionList.find(transaction => transaction.id == TransactionId(id))
+  def map(): Map[Int, TransactionData] = {
+    transactionMap.toMap
   }
 
-  def create(data: TransactionData): TransactionId = {
-    transactionList += data
-    data.id
+  def get(id: Int): Option[TransactionData] = {
+    if (checkId(id)) Some(transactionMap(id)) else None
   }
 
-  def update(data: TransactionData): Boolean = {
-    val currentTransaction = transactionList.filter(transaction => transaction.id == data.id)
-    val result = if (currentTransaction.isEmpty){
-      false
+  def create(data: TransactionData): Option[Int] = {
+    val newKey = transactionMap.keys.max + 1
+    if (changeBalances(data)) {
+      transactionMap(newKey) = data
+      Some(newKey)
     } else {
-      transactionList = transactionList.filter(transaction => transaction.id != data.id)
-      transactionList += data
-      true
+      None
     }
-    result
-  }
-
-  def delete(id: String): Boolean = {
-    val uId = TransactionId(id)
-    val currentTransaction = transactionList.filter(transaction => transaction.id == uId)
-    val result = if (currentTransaction.isEmpty){
-      false
-    } else {
-      transactionList = transactionList.filter(transaction => transaction.id != uId)
-      true
-    }
-    result
   }
 }

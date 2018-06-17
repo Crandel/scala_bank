@@ -1,111 +1,91 @@
 package db
 
-import play.api.libs.json.{JsObject, Json, Writes}
+import play.api.Logger
 
 import scala.collection.mutable
 
 
-final case class AccountData(id: AccountId,
-                             userId: UserId,
-                             currencyId: CurrencyId,
-                             balance: Double)
-
-class AccountId private (val underlying: Int) extends AnyVal {
-  override def toString: String = underlying.toString
-}
-
-object AccountId {
-  private var currentId: Int = 0
-
-  implicit val accountWrites: Writes[AccountId] = new Writes[AccountId] {
-    def writes(account: AccountId): JsObject = Json.obj(
-      "id" -> account.toString
-    )
-  }
-
-  def apply(raw: String = ""): AccountId = {
-    var counter = currentId
-    if (raw == "" ){
-      currentId += 1
-    } else {
-      counter = Integer.parseInt(raw)
-    }
-    new AccountId(counter)
-  }
-}
-
+final case class AccountData(
+  userId: Int,
+  currencyId: Int,
+  var balance: Double
+)
 
 object Accounts {
 
-  private def getUserId(id: String): UserId = {
-    val uData = Users.get(id)
-    uData match {
-      case Some(ud) => ud.id
-    }
+  private val log = Logger(this.getClass)
+
+  private def getUserId(id: Int): Int = {
+    if (Users.checkId(id)) id else 0
   }
 
-  private def getCurrencyId(id: String): CurrencyId = {
-    val uData = Currencies.get(id)
-    uData match {
-      case Some(ud) => ud.id
-    }
+  private def getCurrencyId(id: Int): Int = {
+    if (Currencies.checkId(id)) id else 0
   }
 
   private def init() = {
-    val currency1 = getCurrencyId("0")
-    val currency2 = getCurrencyId("1")
+    val currency1: Int = getCurrencyId(1)
+    val currency2: Int = getCurrencyId(2)
+    val currency3: Int = getCurrencyId(3)
 
-    val user1: UserId = getUserId("1")
-    val user2: UserId = getUserId("2")
-    val user3: UserId = getUserId("3")
-    val user4: UserId = getUserId("4")
-    val user5: UserId = getUserId("5")
+    val user1: Int = getUserId(1)
+    val user2: Int = getUserId(2)
+    val user3: Int = getUserId(3)
+    val user4: Int = getUserId(4)
+    val user5: Int = getUserId(5)
 
-    mutable.MutableList(
-      AccountData(AccountId(), user1, currency1, 50.0),
-      AccountData(AccountId(), user2, currency2, 30.0),
-      AccountData(AccountId(), user3, currency1, 10.0),
-      AccountData(AccountId(), user4, currency1, 10.0),
-      AccountData(AccountId(), user5, currency1, 10.0)
+    mutable.HashMap(
+      1 -> AccountData(user1, currency1, 50.0),
+      2 -> AccountData(user2, currency2, 30.0),
+      3 -> AccountData(user3, currency1, 10.0),
+      4 -> AccountData(user4, currency2, 10.0),
+      5 -> AccountData(user5, currency3, 10.0)
     )
 
   }
 
-  private var accountList = init()
+  private val accountMap = init()
 
-  def get(id: String): Option[AccountData] = {
-    accountList.find(account => account.id == AccountId(id))
+  def checkId(id: Int): Boolean = {
+    accountMap.contains(id)
   }
 
-  def list(): mutable.MutableList[AccountData] = accountList
-
-  def create(data: AccountData): AccountId = {
-    accountList += data
-    data.id
+  def get(id: Int): Option[AccountData] = {
+    if (checkId(id)) Some(accountMap(id)) else None
   }
 
+  def map(): Map[Int, AccountData] = accountMap.toMap
 
-  def update(data: AccountData): Boolean = {
-    val currentUser = accountList.filter(account => account.id == data.id)
-    val result = if (currentUser.isEmpty){
-      false
-    } else {
-      accountList = accountList.filter(account => account.id != data.id)
-      accountList += data
-      true
+  def create(data: AccountData): Option[Int] = {
+    val newKey = accountMap.keys.max + 1
+    Users.get(data.userId) match {
+      case Some(user) => {
+        accountMap(newKey) = data
+        Some(newKey)
+      }
+      case _ => None
     }
-    result
   }
 
-  def delete(id: String): Boolean = {
-    val uId = AccountId(id)
-    val currentAccount = accountList.filter(account => account.id == uId)
-    val result = if (currentAccount.isEmpty){
-      false
-    } else {
-      accountList = accountList.filter(account => account.id != uId)
+  def update(id: Int, data: AccountData): Boolean = {
+    if (checkId(id)){
+      accountMap(id) = data
       true
+    } else {
+      false
     }
-    result
+  }
+
+  def delete(id: Int): Boolean = {
+    log.info("Start delete")
+    if (checkId(id)){
+      log.info("id fine")
+      log.info(accountMap.toString())
+      accountMap -= id
+      log.info(accountMap.toString())
+      true
+    } else {
+      false
+    }
   }
 }

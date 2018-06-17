@@ -1,15 +1,23 @@
 package api.users
 
 import javax.inject.Inject
-
 import play.api.Logger
 import play.api.data.Form
-import play.api.libs.json.Json
+import play.api.libs.json.{JsObject, Json, Writes}
 import play.api.mvc._
 
 import scala.concurrent.{ExecutionContext, Future}
 
 case class UserFormInput(name: String, login: String, password: String)
+//case class UserId(id: Int)
+//
+//object UserId {
+//  implicit val userIdWrites: Writes[UserId] = new Writes[UserId] {
+//    def writes(userId: UserId): JsObject = Json.obj(
+//      "id" -> userId.id
+//    )
+//  }
+//}
 
 class UsersController @Inject()(cc: UserControllerComponents)(
     implicit ec: ExecutionContext)
@@ -29,33 +37,33 @@ class UsersController @Inject()(cc: UserControllerComponents)(
     )
   }
 
-  def index: Action[AnyContent] = UserAction.async { implicit request =>
-    logger.trace("index: ")
-    userResourceHandler.find.map { posts =>
-      Ok(Json.toJson(posts))
+  def userList: Action[AnyContent] = UserAction.async { implicit request =>
+    logger.trace("user list: ")
+    userResourceHandler.findAll.map { users =>
+      Ok(Json.toJson(users))
     }
   }
 
-  def process: Action[AnyContent] = UserAction.async { implicit request =>
-    logger.trace("process: ")
+  def create: Action[AnyContent] = UserAction.async { implicit request =>
+    logger.trace("create: ")
     processJsonUser()
   }
 
-  def show(id: String): Action[AnyContent] = UserAction.async {
+  def show(id: Int): Action[AnyContent] = UserAction.async {
     implicit request =>
       logger.trace(s"show: id = $id")
-      userResourceHandler.lookup(id).map { post =>
-        Ok(Json.toJson(post))
+      userResourceHandler.find(id).map { user =>
+        Ok(Json.toJson(user))
       }
   }
 
-  def update(id: String): Action[AnyContent] = UserAction.async {
+  def update(id: Int): Action[AnyContent] = UserAction.async {
     implicit request =>
       logger.trace(s"update: id = $id")
       updateJsonUser(id)
   }
 
-  def delete(id: String): Action[AnyContent] = UserAction.async {
+  def delete(id: Int): Action[AnyContent] = UserAction.async {
     implicit request =>
       logger.trace(s"show: id = $id")
       deleteUser(id)
@@ -74,7 +82,7 @@ class UsersController @Inject()(cc: UserControllerComponents)(
     form.bindFromRequest().fold(failure, success)
   }
 
-  private def updateJsonUser[A](id: String)(implicit request: UserRequest[A]): Future[Result] = {
+  private def updateJsonUser[A](id: Int)(implicit request: UserRequest[A]): Future[Result] = {
     def failure(badForm: Form[UserFormInput]) = {
       Future.successful(BadRequest(badForm.errorsAsJson))
     }
@@ -93,7 +101,7 @@ class UsersController @Inject()(cc: UserControllerComponents)(
     form.bindFromRequest().fold(failure, success)
   }
 
-  private def deleteUser[A](id: String)(implicit request: UserRequest[A]): Future[Result] = {
+  private def deleteUser[A](id: Int)(implicit request: UserRequest[A]): Future[Result] = {
     userResourceHandler.delete(id).map { userExists: Boolean =>
         val result = if (userExists){
           NoContent

@@ -4,12 +4,13 @@ import javax.inject.Inject
 
 import play.api.Logger
 import play.api.data.Form
+import play.api.data.validation.Constraints._
 import play.api.libs.json.Json
 import play.api.mvc._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-case class AccountFormInput(user_id: String, currency_id: String, balance: Double)
+case class AccountFormInput(user_id: Int, currency_id: Int, balance: Double)
 
 class AccountsController @Inject()(cc: AccountControllerComponents)(implicit ec: ExecutionContext)
     extends AccountBaseController(cc) {
@@ -22,26 +23,26 @@ class AccountsController @Inject()(cc: AccountControllerComponents)(implicit ec:
 
     Form(
       mapping(
-        "account_id" -> nonEmptyText,
-        "currency_id" -> nonEmptyText,
-        "balance" -> of[Double]
+        "user_id" -> number(min = 0),
+        "currency_id" -> number(min = 0),
+        "balance" -> of[Double].verifying(min(0.0))
       )(AccountFormInput.apply)(AccountFormInput.unapply)
     )
   }
 
-  def index: Action[AnyContent] = AccountAction.async { implicit request =>
+  def list: Action[AnyContent] = AccountAction.async { implicit request =>
     logger.trace("index: ")
-    accountResourceHandler.takeList.map { accounts =>
+    accountResourceHandler.findAll.map { accounts =>
       Ok(Json.toJson(accounts))
     }
   }
 
-  def process: Action[AnyContent] = AccountAction.async { implicit request =>
-    logger.trace("process: ")
+  def create: Action[AnyContent] = AccountAction.async { implicit request =>
+    logger.trace("create: ")
     processJsonAccount()
   }
 
-  def show(id: String): Action[AnyContent] = AccountAction.async {
+  def get(id: Int): Action[AnyContent] = AccountAction.async {
     implicit request =>
       logger.trace(s"show: id = $id")
       accountResourceHandler.find(id).map { account =>
@@ -49,15 +50,15 @@ class AccountsController @Inject()(cc: AccountControllerComponents)(implicit ec:
       }
   }
 
-  def update(id: String): Action[AnyContent] = AccountAction.async {
+  def update(id: Int): Action[AnyContent] = AccountAction.async {
     implicit request =>
       logger.trace(s"update: id = $id")
       updateJsonAccount(id)
   }
 
-  def delete(id: String): Action[AnyContent] = AccountAction.async {
+  def delete(id: Int): Action[AnyContent] = AccountAction.async {
     implicit request =>
-      logger.trace(s"show: id = $id")
+      logger.trace(s"delete: id = $id")
       deleteAccount(id)
   }
 
@@ -74,33 +75,31 @@ class AccountsController @Inject()(cc: AccountControllerComponents)(implicit ec:
     form.bindFromRequest().fold(failure, success)
   }
 
-  private def updateJsonAccount[A](id: String)(implicit request: AccountRequest[A]): Future[Result] = {
+  private def updateJsonAccount[A](id: Int)(implicit request: AccountRequest[A]): Future[Result] = {
     def failure(badForm: Form[AccountFormInput]) = {
       Future.successful(BadRequest(badForm.errorsAsJson))
     }
 
     def success(input: AccountFormInput) = {
       accountResourceHandler.update(id, input).map { accountExists: Boolean =>
-        val result = if (accountExists){
+        if (accountExists){
           NoContent
         }else {
           NotFound
         }
-        result
       }
     }
 
     form.bindFromRequest().fold(failure, success)
   }
 
-  private def deleteAccount[A](id: String)(implicit request: AccountRequest[A]): Future[Result] = {
+  private def deleteAccount[A](id: Int)(implicit request: AccountRequest[A]): Future[Result] = {
     accountResourceHandler.delete(id).map { accountExists: Boolean =>
-        val result = if (accountExists){
+        if (accountExists){
           NoContent
         }else {
           NotFound
         }
-        result
     }
   }
 }

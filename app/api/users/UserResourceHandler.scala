@@ -1,6 +1,6 @@
 package api.users
 
-import db.{UserData, UserId}
+import db.UserData
 import javax.inject.{Inject, Provider}
 import play.api.MarkerContext
 
@@ -10,7 +10,7 @@ import play.api.libs.json._
 /**
   * DTO for displaying user information.
   */
-case class UserResource(id: String,
+case class UserResource(id: Int,
                         name: String,
                         login: String,
                         password: String)
@@ -40,27 +40,27 @@ class UserResourceHandler @Inject()(
     userRepository: UserRepository)(implicit ec: ExecutionContext) {
 
   // get users list
-  def lookup(id: String)(
+  def find(id: Int)(
     implicit mc: MarkerContext): Future[Option[UserResource]] = {
     val postFuture = userRepository.get(id)
     postFuture.map { maybeUserData =>
       maybeUserData.map { userData =>
-        createUserResource(userData)
+        createUserResource(id, userData)
       }
     }
   }
 
   // get single user
-  def find(implicit mc: MarkerContext): Future[Iterable[UserResource]] = {
-    userRepository.list().map { userDataList =>
-      userDataList.map(userData => createUserResource(userData))
+  def findAll(implicit mc: MarkerContext): Future[Iterable[UserResource]] = {
+    userRepository.map().map { userDataList =>
+      userDataList.map(userData => createUserResource(userData._1, userData._2))
     }
   }
 
   // create new user
   def create(userInput: UserFormInput)(
-    implicit mc: MarkerContext): Future[UserId] = {
-    val data = UserData(UserId(),
+    implicit mc: MarkerContext): Future[Int] = {
+    val data = UserData(
       userInput.name,
       userInput.login,
       userInput.password)
@@ -68,22 +68,22 @@ class UserResourceHandler @Inject()(
   }
 
   // update existing user
-  def update(id: String, userInput: UserFormInput)(
+  def update(id: Int, userInput: UserFormInput)(
     implicit mc: MarkerContext): Future[Boolean]= {
-    val data = UserData(UserId(id),
+    val data = UserData(
       userInput.name,
       userInput.login,
       userInput.password)
-    userRepository.update(data)
+    userRepository.update(id, data)
   }
 
   // delete existing user
-  def delete(id: String)(
+  def delete(id: Int)(
     implicit mc: MarkerContext): Future[Boolean]= {
     userRepository.delete(id)
   }
 
-  private def createUserResource(u: UserData): UserResource = {
-    UserResource(u.id.toString, u.name, u.login, u.password)
+  private def createUserResource(id: Int, u: UserData): UserResource = {
+    UserResource(id, u.name, u.login, u.password)
   }
 }

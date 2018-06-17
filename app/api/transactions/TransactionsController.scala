@@ -5,11 +5,12 @@ import scala.concurrent.{ExecutionContext, Future}
 import javax.inject.Inject
 import play.api.Logger
 import play.api.data.Form
+import play.api.data.validation.Constraints._
 import play.api.libs.json.Json
 import play.api.mvc._
 
 
-case class TransactionFormInput(source_id: String, destination_id: String, amount: Double)
+case class TransactionFormInput(source_id: Int, destination_id: Int, amount: Double)
 
 class TransactionsController @Inject()(cc: TransactionControllerComponents)(implicit ec: ExecutionContext)
     extends TransactionBaseController(cc) {
@@ -22,9 +23,9 @@ class TransactionsController @Inject()(cc: TransactionControllerComponents)(impl
 
     Form(
       mapping(
-        "source_id" -> nonEmptyText,
-        "destination_id" -> nonEmptyText,
-        "amount" -> of[Double]
+        "source_id" -> number(min = 0),
+        "destination_id" -> number(min = 0),
+        "amount" -> of[Double].verifying(min(0.0))
       )(TransactionFormInput.apply)(TransactionFormInput.unapply)
     )
   }
@@ -38,7 +39,7 @@ class TransactionsController @Inject()(cc: TransactionControllerComponents)(impl
 
   def currencies: Action[AnyContent] = TransactionAction.async {implicit request =>
     logger.trace("currencies: ")
-    currencyResourceHandler.find.map { currency =>
+    currencyResourceHandler.findAll.map { currency =>
       Ok(Json.toJson(currency))
     }
   }
@@ -48,7 +49,7 @@ class TransactionsController @Inject()(cc: TransactionControllerComponents)(impl
     processJsonTransaction()
   }
 
-  def show(id: String): Action[AnyContent] = TransactionAction.async {
+  def show(id: Int): Action[AnyContent] = TransactionAction.async {
     implicit request =>
       logger.trace(s"show: id = $id")
       transactionResourceHandler.find(id).map { transaction =>
@@ -56,24 +57,12 @@ class TransactionsController @Inject()(cc: TransactionControllerComponents)(impl
       }
   }
 
-  def showCurrency(id: String): Action[AnyContent] = TransactionAction.async {
+  def showCurrency(id: Int): Action[AnyContent] = TransactionAction.async {
     implicit request =>
       logger.trace(s"show currency: id = $id")
-      currencyResourceHandler.lookup(id).map { post =>
+      currencyResourceHandler.get(id).map { post =>
         Ok(Json.toJson(post))
       }
-  }
-
-  def update(id: String): Action[AnyContent] = TransactionAction.async {
-    implicit request =>
-      logger.trace(s"update: id = $id")
-      updateJsonTransaction(id)
-  }
-
-  def delete(id: String): Action[AnyContent] = TransactionAction.async {
-    implicit request =>
-      logger.trace(s"show: id = $id")
-      deleteTransaction(id)
   }
 
   private def processJsonTransaction[A]()(implicit request: TransactionRequest[A]): Future[Result] = {
@@ -82,40 +71,11 @@ class TransactionsController @Inject()(cc: TransactionControllerComponents)(impl
     }
 
     def success(input: TransactionFormInput) = {
-      transactionResourceHandler.create(input).map { transaction_id =>
-        Created(Json.toJson(transaction_id))
+      transactionResourceHandler.create(input).map {
+        case Some(id) => Created(Json.toJson(id))
+        case _ => BadRequest("Not enough money in source account")
       }
     }
     form.bindFromRequest().fold(failure, success)
-  }
-
-  private def updateJsonTransaction[A](id: String)(implicit request: TransactionRequest[A]): Future[Result] = {
-    def failure(badForm: Form[TransactionFormInput]) = {
-      Future.successful(BadRequest(badForm.errorsAsJson))
-    }
-
-    def success(input: TransactionFormInput) = {
-      transactionResourceHandler.update(id, input).map { transactionExists: Boolean =>
-        val result = if (transactionExists){
-          NoContent
-        }else {
-          NotFound
-        }
-        result
-      }
-    }
-
-    form.bindFromRequest().fold(failure, success)
-  }
-
-  private def deleteTransaction[A](id: String)(implicit request: TransactionRequest[A]): Future[Result] = {
-    transactionResourceHandler.delete(id).map { transactionExists: Boolean =>
-        val result = if (transactionExists){
-          NoContent
-        }else {
-          NotFound
-        }
-        result
-    }
   }
 }
