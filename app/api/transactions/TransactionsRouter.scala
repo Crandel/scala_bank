@@ -16,12 +16,12 @@ class TransactionsRouter @Inject()(controller: TransactionsController) extends S
       controller.showCurrency(id)
 
     case GET(p"/") =>
-      controller.index
+      controller.findAll
 
     case POST(p"/") =>
-      controller.process
+      controller.create
 
     case GET(p"/${int(id)}") =>
-      controller.show(id)
+      controller.find(id)
   }
 }

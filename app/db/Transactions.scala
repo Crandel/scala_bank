@@ -1,44 +1,109 @@
 package db
 
-import com.typesafe.config.Config
-import javax.inject.Inject
-
 import scala.collection.mutable
+import javax.inject.Inject
+import play.api.{Configuration, Environment, Logger}
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
+
 
 final case class TransactionData(sourceAccount: Int, destinationAccount: Int, amount: Double)
 
+
+case class RateResponse(success: Boolean, timestamp: Int, base:String, date:String, rates: Map[String, Double])
+
+object RateResponse {
+
+  implicit val implicitWrites: Writes[RateResponse] = new Writes[RateResponse] {
+    def writes(rate: RateResponse): JsValue = {
+      Json.obj(
+        "success" -> rate.success,
+        "timestamp" -> rate.timestamp,
+        "base" -> rate.base,
+        "date" -> rate.date,
+        "rates" -> rate.rates
+      )
+    }
+  }
+
+  implicit val implicitReads: Reads[RateResponse] = (
+    (JsPath \ "success").read[Boolean] and
+      (JsPath \ "timestamp").read[Int] and
+      (JsPath \ "base").read[String] and
+      (JsPath \ "date").read[String] and
+      (JsPath \ "rates").read[Map[String, Double]]
+    )(RateResponse.apply _)
+}
+
+class AppConfig @Inject()(conf: Configuration){
+  val accessKey: String = conf.get[String]("fixer.api_key")
+}
+
 object Transactions {
 
-  @Inject() val conf: Config = null
+  private val log = Logger(this.getClass)
 
   private def getAccountId(id: Int): Int = {
     if (Accounts.checkId(id)) id else 0
   }
 
-  private def getCoefficient(sourceIso: String, destIso: String) = {
-    //import scalaj.http._
-    //val response: HttpResponse[Map[String,String]] = Http(s"http://data.fixer.io/api/latest?access_key=${conf.fixer.api_key}").execute(parser = {inputStream =>
-    //  Json.parse[Map[String,String]](inputStream)
-    //})
+  private def getCoefficient(sourceIso: String, destIso: String): Double = {
+    import scalaj.http._
+    val conf = new AppConfig(Configuration.load(Environment.simple()))
+    log.debug("conf.accessKey")
+    log.debug(conf.accessKey)
+    log.debug(sourceIso)
+    log.debug(destIso)
+    val response = Http("http://data.fixer.io/api/latest")
+      .param("access_key", conf.accessKey)
+      .param("symbols", s"$sourceIso,$destIso")
+      .asString
+    log.debug(response.body)
+    val binResponse: RateResponse = Json.parse(response.body).as[RateResponse]
+    log.debug(binResponse.toString)
+    val sourceCoef = binResponse.rates(sourceIso)
+    val destCoef = binResponse.rates(destIso)
+    destCoef / sourceCoef
   }
 
   private def changeBalances(data: TransactionData): Boolean = {
-    val sourceAcc = Accounts.get(data.sourceAccount)
-    val destAcc = Accounts.get(data.destinationAccount)
-    (sourceAcc, destAcc) match {
-      case (Some(sa), Some(da)) => {
-        if (sa.balance - data.amount > 0) {
-          //val sourceCurrency = Currencies.get(sa.currencyId)
-          //val destinationCurrency = Currencies.get(da.currencyId)
-
-          sa.balance -= data.amount
-          da.balance += data.amount
-          true
-        } else {
-          false
+    log.debug("Start change")
+    if (data.sourceAccount != data.destinationAccount) {
+      log.debug("not equal accounts in transaction")
+      val sourceAcc = Accounts.get(data.sourceAccount)
+      val destAcc = Accounts.get(data.destinationAccount)
+      (sourceAcc, destAcc) match {
+        case (Some(sa), Some(da)) => {
+          log.debug("accounts exists")
+          if (sa.balance - data.amount > 0) {
+            log.debug("in source account enough money for transaction")
+            val sourceCurrency = Currencies.get(sa.currencyId)
+            val destinationCurrency = Currencies.get(da.currencyId)
+            (sourceCurrency, destinationCurrency) match {
+              case (Some(sc), Some(dc)) => {
+                log.debug("currencies exists")
+                // We need to get currency rate using API for realtime convertation
+                val coefficient = getCoefficient(sc.iso2, dc.iso2)
+                log.debug("Before transaction")
+                log.debug(sa.toString)
+                log.debug(da.toString)
+                sa.balance -= data.amount
+                da.balance += data.amount * coefficient
+                log.debug("After transaction")
+                log.debug(sa.toString)
+                log.debug(da.toString)
+                true
+              }
+              case _ => false
+            }
+          } else {
+            false
+          }
         }
+        case _ => false
       }
-      case _ => false
+    } else {
+      false
     }
   }
 

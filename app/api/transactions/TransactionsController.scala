@@ -30,9 +30,9 @@ class TransactionsController @Inject()(cc: TransactionControllerComponents)(impl
     )
   }
 
-  def index: Action[AnyContent] = TransactionAction.async { implicit request =>
+  def findAll: Action[AnyContent] = TransactionAction.async { implicit request =>
     logger.trace("index: ")
-    transactionResourceHandler.takeList.map { transactions =>
+    transactionResourceHandler.findAll.map { transactions =>
       Ok(Json.toJson(transactions))
     }
   }
@@ -44,12 +44,12 @@ class TransactionsController @Inject()(cc: TransactionControllerComponents)(impl
     }
   }
 
-  def process: Action[AnyContent] = TransactionAction.async { implicit request =>
+  def create: Action[AnyContent] = TransactionAction.async { implicit request =>
     logger.trace("process: ")
     processJsonTransaction()
   }
 
-  def show(id: Int): Action[AnyContent] = TransactionAction.async {
+  def find(id: Int): Action[AnyContent] = TransactionAction.async {
     implicit request =>
       logger.trace(s"show: id = $id")
       transactionResourceHandler.find(id).map { transaction =>

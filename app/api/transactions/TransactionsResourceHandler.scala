@@ -53,7 +53,7 @@ class TransactionResourceHandler @Inject()(
   }
 
   // get transactions list
-  def takeList(implicit mc: MarkerContext): Future[Iterable[TransactionResource]] = {
+  def findAll(implicit mc: MarkerContext): Future[Iterable[TransactionResource]] = {
     transactionRepository.map().map { transactionDataList =>
       transactionDataList.map(transactionData => createTransactionResource(transactionData._1, transactionData._2))
     }
