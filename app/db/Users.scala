@@ -51,12 +51,8 @@ object Users {
   }
 
   def delete(id: Int): Boolean = {
-    log.info("Start delete")
     if (checkId(id)){
-      log.info("id fine")
-      log.info(usersMap.toString())
       usersMap -= id
-      log.info(usersMap.toString())
       true
     } else {
       false

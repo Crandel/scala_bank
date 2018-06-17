@@ -77,12 +77,8 @@ object Accounts {
   }
 
   def delete(id: Int): Boolean = {
-    log.info("Start delete")
     if (checkId(id)){
-      log.info("id fine")
-      log.info(accountMap.toString())
       accountMap -= id
-      log.info(accountMap.toString())
       true
     } else {
       false
