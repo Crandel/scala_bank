@@ -4,9 +4,8 @@
 # ~~~~
 
 # An example controller showing a sample home page
-POST     /signing                          api.auth.AuthController.signing
-POST     /login                            api.auth.AuthController.login
-POST     /logout                           api.auth.AuthController.logout
+POST     /login                            auth.AuthController.login
+POST     /logout                           auth.AuthController.logout
 
 -> /api/users                              api.users.UsersRouter
 -> /api/accounts                           api.accounts.AccountsRouter

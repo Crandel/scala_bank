@@ -1,5 +1,6 @@
 package api.users
 
+import auth.AuthHelpers.UserRequest
 import javax.inject.Inject
 import play.api.Logger
 import play.api.data.Form

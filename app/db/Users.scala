@@ -27,6 +27,10 @@ object Users {
     usersMap.toMap
   }
 
+  def checkUser(name: String, password: String): Boolean = {
+    usersMap.values.filter(u => (u.name == name && u.password == password)).isEmpty
+  }
+
   def checkId(id: Int): Boolean = {
     usersMap.contains(id)
   }
