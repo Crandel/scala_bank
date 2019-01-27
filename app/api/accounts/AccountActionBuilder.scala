@@ -12,7 +12,9 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
 
 trait AccountRequestHeader extends MessagesRequestHeader with PreferredMessagesProvider
-class AccountRequest[A](request: Request[A], val messagesApi: MessagesApi) extends WrappedRequest(request) with AccountRequestHeader
+class AccountRequest[A](request: Request[A], val messagesApi: MessagesApi)
+    extends WrappedRequest(request)
+    with AccountRequestHeader
 
 trait RequestMarkerContext {
   import net.logstash.logback.marker.Markers

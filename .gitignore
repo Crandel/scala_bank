@@ -8,3 +8,4 @@ target
 /RUNNING_PID
 **ensime**
 conf/secure.conf
+rest_client/
