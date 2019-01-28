@@ -1,6 +1,5 @@
 package api.users
 
-import auth.AuthHelpers.UserRequest
 import javax.inject.Inject
 import play.api.Logger
 import play.api.data.Form
@@ -10,19 +9,10 @@ import play.api.mvc._
 import scala.concurrent.{ExecutionContext, Future}
 
 case class UserFormInput(name: String, login: String, password: String)
-//case class UserId(id: Int)
-//
-//object UserId {
-//  implicit val userIdWrites: Writes[UserId] = new Writes[UserId] {
-//    def writes(userId: UserId): JsObject = Json.obj(
-//      "id" -> userId.id
-//    )
-//  }
-//}
 
 class UsersController @Inject()(cc: UserControllerComponents)(
-    implicit ec: ExecutionContext)
-    extends UserBaseController(cc) {
+  implicit ec: ExecutionContext)
+  extends UserBaseController(cc) {
 
   private val logger = Logger(getClass)
 
@@ -104,12 +94,12 @@ class UsersController @Inject()(cc: UserControllerComponents)(
 
   private def deleteUser[A](id: Int)(implicit request: UserRequest[A]): Future[Result] = {
     userResourceHandler.delete(id).map { userExists: Boolean =>
-        val result = if (userExists){
-          NoContent
-        }else {
-          NotFound
-        }
-        result
+      val result = if (userExists){
+        NoContent
+      }else {
+        NotFound
+      }
+      result
     }
   }
 }

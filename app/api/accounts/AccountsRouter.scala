@@ -9,11 +9,12 @@ class AccountsRouter @Inject()(controller: AccountsController) extends SimpleRou
   val prefix = "/api/accounts"
 
   override def routes: Routes = {
-    case GET(p"/") =>
-      controller.list
 
     case POST(p"/") =>
       controller.create
+
+    case GET(p"/list") =>
+      controller.list
 
     case GET(p"/${int(id)}") =>
       controller.get(id)
